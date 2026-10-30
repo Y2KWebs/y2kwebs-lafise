@@ -1,0 +1,194 @@
+{
+  "operations": {
+    "authenticate": {
+      "url": "https://lafise-cr.portalpos.com/Interfaces/api/Auth/1/0/tokenex",
+      "method": "POST",
+      "request": {
+        "username": "@user_name",
+        "password": "@secret_key"
+      },
+      "response": {
+        "access_token": "access_token",
+        "public_key": "serverTransportKey",
+        "public_key_format": "base64_pem",
+        "key_id": null
+      }
+    },
+    "sale": {
+      "url": "https://lafise-cr.portalpos.com/Interfaces/api/Pay/1/0/Sale",
+      "method": "POST",
+      "authorization": "bearer",
+      "request": {
+        "PurchaseData": {
+          "Terminal_Id": "@terminal_id",
+          "Merchant_Id": "@merchant_id",
+          "Amount": "@amount",
+          "Taxes": [
+            {
+              "Name": "TotalTax",
+              "Amount": "@tax",
+              "IsIncluded": "true"
+            }
+          ],
+          "Description": "@description",
+          "Ref_1": "@reference",
+          "Ref_2": "",
+          "Ref_3": "",
+          "Currency_code": "@currency",
+          "Request_Date": "@request_date"
+        },
+        "UserInformation": {
+          "Payer_id": "",
+          "Payer_firstname": "@first_name",
+          "Payer_lastname": "@last_name",
+          "Payer_mobile": "@phone",
+          "Payer_phone": "@phone",
+          "Payer_email": "@email",
+          "Payer_region": "",
+          "Payer_city": "",
+          "Payer_address": "",
+          "Payer_country": "@country",
+          "Payer_zip": "",
+          "Payer_ip": "@payer_ip"
+        },
+        "ApiSecurity": {
+          "Message_signature": "@message_signature",
+          "UserName": "@user_name"
+        },
+        "ResponseUrl": "@response_url",
+        "EncryptedCardData": "@encrypted_card",
+        "Typerequest": "@type_request",
+        "PaymentType": "@payment_type",
+        "ScreenHeight": "@screen_height",
+        "ScreenWidth": "@screen_width"
+      },
+      "response": {
+        "paths": {
+          "code": "ResponseCode",
+          "amount": "PaymentData.Amount",
+          "currency": "PaymentData.Currency_code",
+          "merchant": "PaymentData.Merchant_Id",
+          "terminal": "PaymentData.Terminal_Id",
+          "signature": "ApiSecurity.Message_signature",
+          "authorization": "AuthorizationCode",
+          "ref3": "PaymentData.Ref_3",
+          "bank_reference": "PaymentData.Ref_1"
+        },
+        "amount_unit": "minor",
+        "signature": {
+          "algorithm": "sha256",
+          "fields": [
+            "merchant_pay_id",
+            "bank_reference",
+            "amount",
+            "merchant",
+            "tax",
+            "currency"
+          ]
+        },
+        "states": {
+          "approved": [],
+          "declined": [],
+          "fingerprint": [
+            "3DS-PRC-001"
+          ],
+          "challenge": [
+            "3DS-PRC-002"
+          ]
+        },
+        "three_ds": {
+          "method_url": "ExtraFile.threeDSMethodURL",
+          "method_data": "ExtraFile.threeDSMethodData",
+          "action": "ExtraFile.Action",
+          "creq": "ExtraFile.Creq",
+          "session_data": "ExtraFile.ThreeDSSessionData"
+        }
+      },
+      "signatures": {
+        "message_signature": {
+          "algorithm": "sha256",
+          "fields": [
+            "merchant_pay_id",
+            "reference",
+            "merchant_id",
+            "amount",
+            "tax",
+            "currency"
+          ]
+        }
+      }
+    },
+    "process": {
+      "url": "https://lafise-cr.portalpos.com/Interfaces/api/Pay/1/0/Process3DS",
+      "method": "POST",
+      "authorization": "bearer",
+      "request": {
+        "threeDSData": "@three_ds_data",
+        "cres": "@cres",
+        "threeDSSessionData": "@session_data"
+      },
+      "response": {
+        "kind": "process_3ds",
+        "paths": {
+          "code": "ResponseCode",
+          "amount": "PaymentInformation.Amount",
+          "currency": "PaymentInformation.Currency_code",
+          "merchant": "PaymentInformation.Merchant_Id",
+          "terminal": "PaymentInformation.Terminal_Id",
+          "signature": "ApiSecurity.Message_signature",
+          "authorization": "PaymentInformation.AuthorizationCode",
+          "ref3": "PaymentInformation.Ref3",
+          "bank_reference": "PaymentInformation.Ref1"
+        },
+        "amount_unit": "major",
+        "signature": {
+          "algorithm": "sha256",
+          "fields": [
+            "merchant_pay_id",
+            "bank_reference",
+            "code",
+            "amount",
+            "merchant",
+            "tax",
+            "currency"
+          ]
+        },
+        "states": {
+          "approved": [
+            "00"
+          ],
+          "declined": []
+        },
+        "challenge": {
+          "action": "Action",
+          "creq": "Creq",
+          "session_data": "ThreeDSSessionData"
+        }
+      },
+      "empty_fields_as_null": [
+        "threeDSData",
+        "cres",
+        "threeDSSessionData"
+      ]
+    },
+    "inquire": {
+      "url": "https://lafise-cr.portalpos.com/Interfaces/api/Pay/1/0/StatusCheck",
+      "method": "POST",
+      "authorization": "bearer",
+      "request": {
+        "UserName": "@user_name",
+        "TerminalId": "@terminal_id",
+        "Ref3": "@ref3",
+        "TrTypeReq": "4"
+      },
+      "response": {
+        "kind": "status_check",
+        "amount_unit": "major",
+        "approval_code": "00",
+        "original_validated_receipt_required": true
+      }
+    }
+  },
+  "status": "pilot",
+  "version": 1
+}

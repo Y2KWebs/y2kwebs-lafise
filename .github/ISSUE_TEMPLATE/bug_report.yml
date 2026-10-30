@@ -1,0 +1,47 @@
+name: Reportar un problema
+description: Instalación, configuración o comportamiento del plugin con datos ficticios.
+title: '[Error] '
+body:
+  - type: markdown
+    attributes:
+      value: |
+        No incluyas contraseñas, API KEY, tarjetas, CVV, cookies, URLs privadas de pago ni respuestas bancarias completas. Para vulnerabilidades utiliza el reporte privado indicado en SECURITY.md.
+  - type: input
+    id: versions
+    attributes:
+      label: Versiones
+      description: Plugin, WordPress, WooCommerce y PHP.
+      placeholder: Plugin 0.2.0 / WordPress 7.1.4 / WooCommerce 11.2.1 / PHP 8.2
+    validations:
+      required: true
+  - type: dropdown
+    id: checkout
+    attributes:
+      label: Tipo de checkout
+      options:
+        - Bloques
+        - Clásico
+        - No corresponde
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Pasos para reproducir
+      description: Usa ejemplos ficticios. No hagas nuevos cobros para reproducir una incidencia.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Resultado esperado y observado
+      description: Puedes incluir el código genérico del diagnóstico, sin datos del comercio.
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Datos del reporte
+      options:
+        - label: He comprobado que este reporte no contiene credenciales ni datos de pago o compradores.
+          required: true

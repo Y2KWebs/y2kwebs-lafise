@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Reportar una vulnerabilidad en privado
+    url: https://github.com/Y2KWebs/y2kwebs-lafise/security/advisories/new
+    about: No publiques detalles explotables ni información privada en incidencias.
+  - name: Instalación y soporte profesional de Y2KWebs
+    url: https://y2kwebs.com/
+    about: Servicios opcionales mediante acuerdo separado.

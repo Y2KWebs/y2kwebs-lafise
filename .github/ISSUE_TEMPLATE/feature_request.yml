@@ -1,0 +1,18 @@
+name: Proponer una mejora
+description: Explica una necesidad de un comercio o una mejora de uso.
+title: '[Mejora] '
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: Necesidad
+      description: Qué tarea quieres resolver y a quién ayudaría, sin datos privados del comercio.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Comportamiento propuesto
+      description: Describe el resultado esperado y, si corresponde, las alternativas que usas ahora.
+    validations:
+      required: true

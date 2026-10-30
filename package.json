@@ -1,0 +1,9 @@
+{
+  "name": "y2kwebs-lafise",
+  "version": "0.2.0",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/jwe.test.mjs",
+    "package": "python scripts/package.py"
+  }
+}
