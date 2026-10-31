@@ -39,12 +39,14 @@ final class Store
         global $wpdb;
         $name = 'y2kl:' . hash('sha256', $this->table . ':' . $orderId);
         $name = substr($name, 0, 64);
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Connection-scoped mutex must be acquired directly, never served from cache.
         if ((string) $wpdb->get_var($wpdb->prepare('SELECT GET_LOCK(%s, 0)', $name)) !== '1') {
             throw new \RuntimeException('Operation already in progress.');
         }
         try {
             return $work();
         } finally {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Release the mutex on the same database connection.
             $wpdb->get_var($wpdb->prepare('SELECT RELEASE_LOCK(%s)', $name));
         }
     }
@@ -52,14 +54,16 @@ final class Store
     public function latest(int $orderId): ?array
     {
         global $wpdb;
-        $row = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$this->table} WHERE order_id = %d ORDER BY id DESC LIMIT 1", $orderId), ARRAY_A);
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom encrypted attempt table; fresh reads under the order lock prevent duplicate sales.
+        $row = $wpdb->get_row($wpdb->prepare('SELECT * FROM %i WHERE order_id = %d ORDER BY id DESC LIMIT 1', $this->table, $orderId), ARRAY_A);
         return $row ? $this->decode($row) : null;
     }
 
     public function find(string $reference): ?array
     {
         global $wpdb;
-        $row = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$this->table} WHERE reference = %s", $reference), ARRAY_A);
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom encrypted attempt table; callbacks and polling need the current state.
+        $row = $wpdb->get_row($wpdb->prepare('SELECT * FROM %i WHERE reference = %s', $this->table, $reference), ARRAY_A);
         return $row ? $this->decode($row) : null;
     }
 
@@ -74,6 +78,7 @@ final class Store
         global $wpdb;
         $reference = 'Y2K' . strtoupper(bin2hex(random_bytes(8)));
         $now = gmdate('Y-m-d H:i:s');
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Persist irreversible intent in the custom table before sending the bank request.
         $ok = $wpdb->insert($this->table, ['order_id' => $orderId, 'reference' => $reference, 'ticket_hash' => $data['ticket_hash'], 'state' => 'sending',
             'data' => Secrets::seal($data), 'created_at' => $now, 'updated_at' => $now]);
         if ($ok !== 1) {
@@ -85,6 +90,7 @@ final class Store
     public function save(array $attempt, string $state, array $data): array
     {
         global $wpdb;
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Persist the encrypted bank state under the order lock; no object-cache copy is maintained.
         if ($wpdb->update($this->table, ['state' => $state, 'data' => Secrets::seal($data), 'updated_at' => gmdate('Y-m-d H:i:s')],
             ['id' => $attempt['id']]) === false) {
             throw new \RuntimeException('Cannot persist bank result.');

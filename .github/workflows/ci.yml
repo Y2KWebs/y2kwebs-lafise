@@ -82,6 +82,7 @@ jobs:
             docker compose -f tests/compose.yml run --rm cli wp eval-file wp-content/plugins/y2kwebs-lafise/tests/integration.php
           done
           docker compose -f tests/compose.yml run --rm cli wp eval-file wp-content/plugins/y2kwebs-lafise/tests/settings.php
+          docker compose -f tests/compose.yml run --rm cli wp eval-file wp-content/plugins/y2kwebs-lafise/tests/security.php
       - name: Build and exercise the release ZIP
         run: |
           python scripts/package.py
@@ -93,6 +94,13 @@ jobs:
           docker compose -f tests/compose.yml run --rm --volume "$release_mount" --volume "$smoke_mount" cli wp eval-file /tmp/y2k-release-smoke.php
           cd dist
           sha256sum --check y2kwebs-lafise-0.2.1.zip.sha256
+      - name: Plugin Check on the installable package
+        run: |
+          docker compose -f tests/compose.yml run --rm cli wp plugin install plugin-check --version=2.1.0 --activate
+          release_mount="$GITHUB_WORKSPACE/.runtime/release-check/y2kwebs-lafise:/var/www/html/wp-content/plugins/y2kwebs-lafise:ro"
+          docker compose -f tests/compose.yml run --rm --volume "$release_mount" cli wp --require=/var/www/html/wp-content/plugins/plugin-check/cli.php plugin check y2kwebs-lafise --format=csv --fields=type,code > .runtime/plugin-check.csv
+          cat .runtime/plugin-check.csv
+          if grep -qE '^"?(ERROR|WARNING)"?,' .runtime/plugin-check.csv; then exit 1; fi
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: y2kwebs-lafise-0.2.1

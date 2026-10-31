@@ -6,6 +6,9 @@ spl_autoload_register(static function (string $class): void {
 });
 use Y2KWebs\Lafise\{Money, Protocol, ThreeDS, Bank};
 
+// Minimal WordPress compatibility shim for the standalone protocol suite.
+function wp_parse_url(string $url): array|false { return parse_url($url); }
+
 $count = 0;
 function check(bool $condition, string $message): void {
     global $count;

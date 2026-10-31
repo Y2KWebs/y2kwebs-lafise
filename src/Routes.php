@@ -3,14 +3,33 @@ namespace Y2KWebs\Lafise;
 
 final class Routes
 {
+    /** Read only the restricted token/JWE/base64 alphabets without changing signed bytes. */
+    public static function post(string $name): string
+    {
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Checkout/AJAX use Payments::verifyCsrf; bank callbacks use a bearer token and 3DS correlation.
+        if (!isset($_POST[$name]) || !is_string($_POST[$name])) { return ''; }
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Authentication is enforced by the caller before payment processing.
+        $value = sanitize_text_field(wp_unslash($_POST[$name]));
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- The raw value is used only to reject any sanitization change to signed bytes, never for processing or output.
+        if ($value !== wp_unslash($_POST[$name]) || strlen($value) > 16384 || !preg_match('/^[A-Za-z0-9_+\/=.-]*$/D', $value)) {
+            throw new \DomainException('Invalid payment input.');
+        }
+        return $value;
+    }
+
+    private static function method(): string
+    {
+        return strtoupper(sanitize_text_field(wp_unslash($_SERVER['REQUEST_METHOD'] ?? '')));
+    }
+
     public static function key(): void
     {
         nocache_headers();
         try {
-            if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST' || !is_ssl()) {
+            if (self::method() !== 'POST' || !is_ssl()) {
                 throw new \DomainException('Invalid request.');
             }
-            $csrf = isset($_POST['csrf']) && is_string($_POST['csrf']) ? wp_unslash($_POST['csrf']) : '';
+            $csrf = self::post('csrf');
             wp_send_json_success((new Payments())->key($csrf));
         } catch (\Throwable) {
             wp_send_json_error(['message' => __('No se pudo preparar el pago.', 'y2kwebs-lafise')], 400);
@@ -36,7 +55,10 @@ final class Routes
     {
         $action = get_query_var('y2k_action');
         if (!$action) { return; }
-        if (!defined('DONOTCACHEPAGE')) { define('DONOTCACHEPAGE', true); }
+        if (!defined('DONOTCACHEPAGE')) {
+            // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound -- Standard cache-plugin interoperability flag; its name must not change.
+            define('DONOTCACHEPAGE', true);
+        }
         nocache_headers();
         header('Referrer-Policy: no-referrer');
         header('X-Robots-Tag: noindex, nofollow, noarchive');
@@ -49,17 +71,17 @@ final class Routes
             $payments = new Payments();
             $a = $payments->authorize($reference, $token);
             if ($action === 'callback') {
-                if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST' || (int) ($_SERVER['CONTENT_LENGTH'] ?? 0) > 65536) {
+                if (self::method() !== 'POST' || absint(wp_unslash($_SERVER['CONTENT_LENGTH'] ?? 0)) > 65536) {
                     throw new \DomainException('Invalid callback.');
                 }
                 $input = [];
                 foreach (['threeDSMethodData', 'threeDSSessionData', 'cres'] as $name) {
-                    if (isset($_POST[$name]) && is_string($_POST[$name])) { $input[$name] = wp_unslash($_POST[$name]); }
+                    $input[$name] = self::post($name);
                 }
                 $payments->callback($reference, $token, $input);
                 self::page(__('Verificación recibida. Puedes regresar al pago.', 'y2kwebs-lafise'), 'callback.js');
             }
-            if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'GET') { throw new \DomainException('Invalid request.'); }
+            if (self::method() !== 'GET') { throw new \DomainException('Invalid request.'); }
             if ($action === 'status') {
                 wp_send_json($payments->status($reference, $token));
             }
@@ -80,11 +102,23 @@ final class Routes
 
     private static function page(string $body, string $script = '', bool $html = false): never
     {
+        wp_enqueue_style('y2k-lafise-page', plugins_url('assets/checkout.css', Y2K_LAFISE_FILE), [], Y2K_LAFISE_VERSION);
+        if ($script) {
+            wp_enqueue_script('y2k-lafise-page', plugins_url('assets/' . $script, Y2K_LAFISE_FILE), [], Y2K_LAFISE_VERSION, ['strategy' => 'defer']);
+        }
         header('Content-Type: text/html; charset=UTF-8');
         echo '<!doctype html><html lang="' . esc_attr(get_bloginfo('language')) . '"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
-            . '<title>' . esc_html__('Pago LAFISE', 'y2kwebs-lafise') . '</title><link rel="stylesheet" href="' . esc_url(plugins_url('assets/checkout.css', Y2K_LAFISE_FILE)) . '"></head><body>';
-        echo $html ? $body : '<p>' . esc_html($body) . '</p>';
-        if ($script) { echo '<script src="' . esc_url(plugins_url('assets/' . $script, Y2K_LAFISE_FILE)) . '" defer></script>'; }
+            . '<title>' . esc_html__('Pago LAFISE', 'y2kwebs-lafise') . '</title>';
+        wp_print_styles(['y2k-lafise-page']);
+        echo '</head><body>';
+        if ($html) {
+            echo wp_kses($body, ['main' => ['class' => true, 'data-status-url' => true], 'h1' => [],
+                'p' => ['role' => true, 'data-message' => true],
+                'iframe' => ['hidden' => true, 'name' => true, 'title' => true, 'sandbox' => true]]);
+        } else {
+            echo '<p>' . esc_html($body) . '</p>';
+        }
+        if ($script) { wp_print_scripts(['y2k-lafise-page']); }
         echo '</body></html>';
         exit;
     }

@@ -5,7 +5,7 @@ final class ThreeDS
 {
     public static function destination(string $url): string
     {
-        $p = parse_url($url);
+        $p = wp_parse_url($url);
         $host = strtolower($p['host'] ?? '');
         if (strlen($url) > 2048 || !filter_var($url, FILTER_VALIDATE_URL) || preg_match('/[\x00-\x20\x7f\\\\]/', $url) || !$p
             || ($p['scheme'] ?? '') !== 'https' || isset($p['user']) || isset($p['pass']) || isset($p['fragment'])

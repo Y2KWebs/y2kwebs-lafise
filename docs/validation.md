@@ -30,16 +30,18 @@ Todas las comprobaciones siguientes se ejecutaron el 31/10/2026 con datos fictic
 
 | Comprobación | Resultado |
 |---|---|
-| Sintaxis PHP 8.4.0 | 23 archivos PHP sin errores |
+| Sintaxis PHP 8.4.0 | 24 archivos PHP sin errores, incluida la nueva suite de seguridad |
 | Protocolo, PHP 8.2.35 y 8.4.0 | 53 aserciones superadas en cada versión |
 | Transporte y diagnóstico, PHP 8.2.35 y 8.4.0 | 40 aserciones superadas en cada versión; contratos inválidos bloquean todo HTTP y el conflicto de autorización usa un diagnóstico fijo |
 | WebCrypto / JWE, Node.js 24.15.0 | 2 pruebas superadas |
 | WordPress, almacenamiento clásico | 65 aserciones de integración superadas; almacenamiento `no` comprobado |
 | WordPress, HPOS | 65 aserciones de integración superadas; almacenamiento `yes` comprobado |
 | Ajustes nativos y API administrativa | 17 aserciones superadas |
+| Entradas, HTML y callbacks HTTP locales | 30 aserciones de seguridad superadas; conservación de bytes, iframe y campos, recursos registrados, cabeceras y rechazo/deduplicación de callbacks |
+| Plugin Check 2.1.0 sobre el paquete instalable | Comprobaciones estáticas y de ejecución sin errores ni avisos reportados; sin excluir categorías ni códigos por opciones de CLI |
 | Empaquetado, Python 3.11.4 | 5 pruebas superadas, incluida reproducibilidad y exclusión de material privado ficticio |
 | Copia extraída del ZIP 0.2.1 | Activación y 10 aserciones superadas: versión, exclusión de herramientas/tests, HTML de ajustes, permisos y API sin secretos; todo HTTP externo bloqueado |
-| Revisión del repositorio y del paquete | 56 candidatos públicos y 36 archivos del ZIP revisados por separado; sin referencias identificativas a comercios o compradores; enlaces Markdown locales válidos |
+| Revisión del repositorio y del paquete | 57 candidatos públicos y 36 archivos del ZIP revisados por separado; sin referencias identificativas a comercios o compradores; enlaces Markdown locales válidos |
 | Workflow y artefactos | actionlint sin errores; ZIP reproducible con SHA-256; los artefactos locales 0.2.0 conservan sus hashes |
 
 La integración añade desafío directo → callback → aprobación financiera, callbacks manipulados y repetidos, confirmación única y stock reducido una vez. También verifica `59` válido, firma inválida, autorización contradictoria y código no reconocido: solo el rechazo validado habilita un nuevo intento solicitado por el comprador. Un CRes con `transStatus=Y` no demuestra por sí solo un cobro aprobado. Las pruebas de contrato rechazan variantes sin campos obligatorios, códigos financieros/desconocidos, otra operación, ausencia de bearer, solapamiento financiero y algoritmos no admitidos.
@@ -99,6 +101,14 @@ Los comandos para reproducir las suites están en [desarrollo](development.md). 
 - Matriz completa de navegadores y móviles, incluido Safari; la cobertura publicada no comprende todas las combinaciones.
 
 Las devoluciones automáticas mediante Reversed son una funcionalidad aún no implementada, no simplemente una prueba pendiente. Mientras tanto, se gestionan en el banco y se registran manualmente en WooCommerce.
+
+## Revisión de Plugin Check
+
+El informe recibido el 31/10 contenía 7 errores y 35 avisos. Se corrigieron el escape de HTML y mensajes, la lectura de entradas y variables de servidor, el registro de CSS/JavaScript en las páginas independientes, el uso de `wp_parse_url`, los identificadores de tabla preparados con `%i` y la cabecera `Tested up to: 7.1`, basada en la instalación previamente comprobada. Las listas de HTML permitidas conservan los campos sin `name`, los selectores de JavaScript y el iframe 3DS con su sandbox.
+
+Los avisos de nonce, constante de caché y SQL directo que corresponden a mecanismos deliberados se justifican en líneas concretas del código: autorización CSRF o token/correlación bancaria, interoperabilidad con cachés y lectura/escritura de intentos cifrados bajo bloqueo sin caché de estados financieros. La comparación con los bytes originales rechaza cualquier cambio de la sanitización. No hay exclusiones globales de reglas.
+
+Plugin Check 2.1.0 se ejecutó sobre la copia extraída del ZIP, también con su bootstrap de ejecución: no reportó errores ni avisos. Se repitieron las 65 aserciones de integración por almacenamiento, las 17 de ajustes, las suites de protocolo/transporte, WebCrypto y empaquetado, y se añadieron 30 aserciones de seguridad con HTTP entre contenedores. El pago real documentado arriba se realizó antes de estos ajustes de Plugin Check; las comprobaciones posteriores son automatizadas con banco simulado y no se ha efectuado otro cargo real desde las herramientas.
 
 No se dan por superados los casos pendientes. Las respuestas no reconocidas se conservan para consulta/revisión y no habilitan reintentos automáticos. La comprobación de conexión solo acredita autenticación y formato de llave pública; no sustituye un pago completo.
 

@@ -2,6 +2,7 @@
 Contributors: y2kwebs
 Tags: woocommerce, payments, costa-rica, lafise
 Requires at least: 6.9
+Tested up to: 7.1
 Requires PHP: 8.2
 Stable tag: 0.2.1
 License: GPLv2 or later
@@ -30,6 +31,8 @@ Install WooCommerce, upload the ZIP, activate the plugin and enter your merchant
 == Changelog ==
 = 0.2.1 =
 Prepared for review, not yet published. Direct Sale challenge 3DS-PRC-002 uses one explicit code-bound signature rule, preserving minor amount units and the existing fingerprint formula. Unsafe signature variants prevent HTTP requests. Verified Process3DS decline 59 permits a new user-requested attempt; conflicting authorization remains uncertain with a fixed safe diagnostic. No changes to automatic refund support or unclassified direct financial Sale outcomes. New fixtures are synthetic. A cardholder-operated real USD 1 payment with a manual 3DS challenge was completed and its paid order and approved attempt were checked through the authenticated API.
+
+Plugin Check review: escaped checkout/verification markup, registered standalone assets, byte-preserving input validation, WordPress URL parsing, prepared table identifiers and tested-version header. Deliberate session/token authorization, cache interoperability and uncached payment locks have narrowly documented PHPCS exceptions. Local HTTP security regressions and Plugin Check cover the package after these changes; the real payment above predates this review.
 
 = 0.2.0 =
 Preliminary public release. Admin-managed encrypted credentials, normal checkout, optional restricted test mode, authenticated 3DS destinations and safe authentication retries. Direct Sale approvals and definitive decline codes need further verification; automatic bank refunds are not implemented.
