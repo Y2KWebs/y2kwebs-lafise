@@ -69,6 +69,47 @@ rejects(fn () => $protocol->validate('sale',$sale,$ctx), '3DS requires authentic
 check($protocol->validate('sale',$sale,$ctx,[],true)['state'] === 'fingerprint','Authenticated new issuer');
 $sale['ExtraFile']['threeDSMethodURL']='https://issuer.home/method';
 check($protocol->validate('sale',$sale,$ctx,[],true)['reason'] === 'authentication_setup_failed','Safe failure before authentication submission');
+$challenge = $sale;
+$challenge['ResponseCode'] = '3DS-PRC-002';
+$challenge['PaymentData']['Ref_1'] = null;
+$challenge['PaymentData']['Ref_3'] = '';
+$challenge['ExtraFile'] = ['Action' => 'https://issuer.bank.com/acs',
+    'Creq' => $encode(['threeDSServerTransID' => $id]), 'ThreeDSSessionData' => $encode($id)];
+// Independent vector calculated outside the PHP signer, using fictitious values.
+$challenge['ApiSecurity']['Message_signature'] = '581da8be8c3a52176a0678005cfd9c1fb4371bcc938c594c15f6d6731067d51d';
+$result = $protocol->validate('sale', $challenge, $ctx, [], true);
+check($result['state'] === 'challenge' && $result['receipt']['bank_reference'] === '' && $result['transaction_id'] === $id,
+    'Direct challenge preserves minor amount and normalizes null bank reference');
+rejects(fn () => $protocol->validate('sale', $challenge, $ctx), 'Direct challenge requires authenticated transport');
+$badSignature = $challenge;
+$badSignature['ApiSecurity']['Message_signature'] = hash('sha256', $ctx['merchant_pay_id'] . '100' . '1234567890' . '0' . 'USD');
+rejects(fn () => $protocol->validate('sale', $badSignature, $ctx, [], true), 'Challenge cannot fall back to fingerprint signature');
+$badSignature['ApiSecurity']['Message_signature'] = str_repeat('0', 64);
+rejects(fn () => $protocol->validate('sale', $badSignature, $ctx, [], true), 'Forged challenge signature');
+$fingerprint = $sale;
+$fingerprint['PaymentData']['Ref_1'] = null;
+$fingerprint['ExtraFile']['threeDSMethodURL'] = 'https://issuer.bank.com/method';
+$fingerprint['ApiSecurity']['Message_signature'] = hash('sha256', $ctx['merchant_pay_id'] . '100' . '1234567890' . '0' . 'USD');
+check($protocol->validate('sale', $fingerprint, $ctx, [], true)['state'] === 'fingerprint', 'Fingerprint formula remains unchanged');
+$fingerprint['ApiSecurity']['Message_signature'] = $challenge['ApiSecurity']['Message_signature'];
+rejects(fn () => $protocol->validate('sale', $fingerprint, $ctx, [], true), 'Challenge signature cannot authenticate fingerprint');
+foreach (['59', '96', '06'] as $code) {
+    $final = $payload;
+    $final['ResponseCode'] = $code;
+    $final['PaymentInformation']['AuthorizationCode'] = '';
+    $final['ApiSecurity']['Message_signature'] = hash('sha256', $ctx['merchant_pay_id'] . 'BANK001' . $code . '1.00' . '1234567890' . '0' . 'USD');
+    check($protocol->validate('process', $final, $ctx)['state'] === ($code === '59' ? 'declined' : 'unknown'), 'Only reviewed Process3DS decline is classified');
+    if ($code === '59') {
+        $conflict = $final;
+        $conflict['PaymentInformation']['AuthorizationCode'] = 'TESTAUTH';
+        rejects(fn () => $protocol->validate('process', $conflict, $ctx), 'Contradictory decline authorization');
+        $final['ApiSecurity']['Message_signature'] = str_repeat('0', 64);
+        rejects(fn () => $protocol->validate('process', $final, $ctx), 'Decline requires verified signature');
+    }
+}
+$directDecline = $sale;
+$directDecline['ResponseCode'] = '59';
+check($protocol->validate('sale', $directDecline, $ctx)['state'] === 'unknown', 'Sale decline remains unclassified');
 $html = '<form method="POST" action="https://issuer.bank.com/acs"><input name="creq" value="abc"><input name="threeDSSessionData" value="def"></form>';
 check(Bank::continuation($html)['Creq'] === 'abc', 'Parse bank HTML without execution');
 rejects(fn () => Bank::continuation($html.$html), 'Ambiguous forms');

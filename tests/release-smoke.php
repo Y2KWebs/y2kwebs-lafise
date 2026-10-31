@@ -9,7 +9,7 @@ $assert = static function (bool $ok, string $message) use (&$checks): void {
 };
 $root = dirname(Y2K_LAFISE_FILE);
 $assert(!is_dir($root . '/tests') && !is_dir($root . '/scripts'), 'ZIP mount must exclude development files');
-$assert(Y2K_LAFISE_VERSION === '0.2.0', 'Installed ZIP version');
+$assert(Y2K_LAFISE_VERSION === '0.2.1', 'Installed ZIP version');
 $assert(is_plugin_active('y2kwebs-lafise/y2kwebs-lafise.php'), 'Installed ZIP activated');
 $assert(current_user_can('manage_woocommerce'), 'Administrator has settings access');
 $gateway = new Y2KWebs\Lafise\Gateway();

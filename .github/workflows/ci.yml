@@ -85,20 +85,20 @@ jobs:
       - name: Build and exercise the release ZIP
         run: |
           python scripts/package.py
-          python -m zipfile -e dist/y2kwebs-lafise-0.2.0.zip .runtime/release-check
+          python -m zipfile -e dist/y2kwebs-lafise-0.2.1.zip .runtime/release-check
           release_mount="$GITHUB_WORKSPACE/.runtime/release-check/y2kwebs-lafise:/var/www/html/wp-content/plugins/y2kwebs-lafise:ro"
           smoke_mount="$GITHUB_WORKSPACE/tests/release-smoke.php:/tmp/y2k-release-smoke.php:ro"
           docker compose -f tests/compose.yml run --rm --volume "$release_mount" cli wp plugin deactivate y2kwebs-lafise
           docker compose -f tests/compose.yml run --rm --volume "$release_mount" cli wp plugin activate y2kwebs-lafise
           docker compose -f tests/compose.yml run --rm --volume "$release_mount" --volume "$smoke_mount" cli wp eval-file /tmp/y2k-release-smoke.php
           cd dist
-          sha256sum --check y2kwebs-lafise-0.2.0.zip.sha256
+          sha256sum --check y2kwebs-lafise-0.2.1.zip.sha256
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: y2kwebs-lafise-0.2.0
+          name: y2kwebs-lafise-0.2.1
           path: |
-            dist/y2kwebs-lafise-0.2.0.zip
-            dist/y2kwebs-lafise-0.2.0.zip.sha256
+            dist/y2kwebs-lafise-0.2.1.zip
+            dist/y2kwebs-lafise-0.2.1.zip.sha256
           if-no-files-found: error
           retention-days: 14
       - name: Stop disposable services

@@ -7,7 +7,7 @@
 5. Guarda y pulsa **Comprobar conexión (sin cobro)**. Esta acción autentica y comprueba la llave pública; no realiza una venta.
 6. Activa el método de pago. En modo **Normal** estará disponible para los compradores, incluidos invitados.
 
-No se solicitan certificados, códigos de aprobación ni archivos de configuración privados para usar el plugin. Cada comercio utiliza sus propias credenciales y acuerda con LAFISE las condiciones de su servicio. La versión 0.2.0 es preliminar; consulta la [validación](validation.md) antes de realizar pruebas bancarias.
+No se solicitan certificados, códigos de aprobación ni archivos de configuración privados para usar el plugin. Cada comercio utiliza sus propias credenciales y acuerda con LAFISE las condiciones de su servicio. La versión 0.2.1 es preliminar; consulta la [validación](validation.md) antes de realizar pruebas bancarias.
 
 Si WooCommerce indica que no hay métodos de pago, comprueba que la pasarela esté activada, que las credenciales estén completas, que la moneda del terminal coincida con la tienda y que WordPress detecte HTTPS. En modo Pruebas, accede con una cuenta autorizada. Si `Typerequest` no se ha guardado, el plugin utiliza `Production`; un valor guardado explícitamente vacío sigue siendo inválido.
 

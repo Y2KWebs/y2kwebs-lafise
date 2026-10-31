@@ -21,7 +21,7 @@ function wp_safe_remote_post($url, $args) {
     if ($response instanceof Throwable) { throw $response; }
     return $response;
 }
-use Y2KWebs\Lafise\{Bank, Config};
+use Y2KWebs\Lafise\{Bank, Config, Protocol};
 $checks = 0;
 $assert = static function (bool $ok, string $name) use (&$checks): void {
     if (!$ok) { throw new RuntimeException($name); }
@@ -91,4 +91,45 @@ $response = new WP_Error('http_request_failed', $privateMarker);
 $result = $bank->execute('sale', $context);
 $assert($result['reason'] === 'payment_not_sent' && $calls === ['tokenex'], 'Failed authentication does not submit Sale');
 $assert($result['diagnostic']['operation'] === 'authenticate', 'Authentication failure identified');
+
+$fields = ['merchant_pay_id', 'bank_reference', 'code', 'amount', 'merchant', 'tax', 'currency'];
+$invalidContracts = [
+    'approval' => ['sale', '00', $fields], 'decline' => ['sale', '59', $fields],
+    'unknown code' => ['sale', '3DS-PRC-999', $fields], 'other operation' => ['process', '3DS-PRC-002', $fields],
+    'non-array fields' => ['sale', '3DS-PRC-002', 'code'],
+    'non-string field' => ['sale', '3DS-PRC-002', [...$fields, ['invalid']]],
+];
+foreach (['merchant_pay_id', 'bank_reference', 'code', 'amount', 'merchant', 'currency'] as $missing) {
+    $invalidContracts['missing ' . $missing] = ['sale', '3DS-PRC-002', array_values(array_diff($fields, [$missing]))];
+}
+foreach ($invalidContracts as $label => [$operation, $code, $variantFields]) {
+    $protocol = new Protocol();
+    $protocol->definition[$operation]['response']['signature_by_code'] = [$code => ['algorithm' => 'sha256', 'fields' => $variantFields]];
+    $calls = [];
+    $result = (new Bank(new Config(), $protocol))->execute('sale', $context);
+    $assert($calls === [] && $result['reason'] === 'payment_not_sent'
+        && $result['diagnostic']['failure'] === 'protocol_contract_invalid', 'Unsafe contract blocks all HTTP: ' . $label);
+}
+foreach (['unauthenticated', 'financial overlap', 'wrong algorithm', 'invalid variants'] as $label) {
+    $protocol = new Protocol();
+    if ($label === 'unauthenticated') { $protocol->definition['sale']['authorization'] = ''; }
+    if ($label === 'financial overlap') { $protocol->definition['sale']['response']['states']['approved'][] = '3DS-PRC-002'; }
+    if ($label === 'wrong algorithm') { $protocol->definition['sale']['response']['signature_by_code']['3DS-PRC-002']['algorithm'] = 'md5'; }
+    if ($label === 'invalid variants') { $protocol->definition['sale']['response']['signature_by_code'] = 'invalid'; }
+    $calls = [];
+    $invalidBank = new Bank(new Config(), $protocol);
+    $result = $invalidBank->execute('sale', $context);
+    $assert($calls === [] && $result['diagnostic']['failure'] === 'protocol_contract_invalid', 'Invalid contract cannot authenticate: ' . $label);
+    try { $invalidBank->authenticate(); $assert(false, 'Invalid contract authentication'); }
+    catch (DomainException) { $assert($calls === [], 'Direct authentication also validates contract'); }
+}
+
+$final = ['ResponseCode' => '59', 'PaymentInformation' => ['Amount' => '1.00', 'Currency_code' => 'USD',
+    'Merchant_Id' => 'TESTM', 'Terminal_Id' => 'TESTT', 'AuthorizationCode' => 'CONTRADICTORY', 'Ref1' => 'SYNTHETICREF', 'Ref3' => '000001'],
+    'ApiSecurity' => ['Message_signature' => hash('sha256', 'fixture-key' . 'SYNTHETICREF' . '59' . '1.00' . 'TESTM' . '0' . 'USD')],
+    'ResponseMessage' => $privateMarker];
+$response = $respond(200, $final);
+$result = $bank->execute('process', $context + ['three_ds_data' => '', 'cres' => '', 'session_data' => ''], [], $auth);
+$assert($result['state'] === 'unknown' && $result['diagnostic']['failure'] === 'decline_authorization_conflict', 'Contradictory decline is a safe fixed diagnostic');
+$assert(!str_contains(json_encode($result), $privateMarker) && !str_contains(json_encode($result), 'CONTRADICTORY'), 'Conflict diagnostic excludes arbitrary response and authorization');
 echo "OK: $checks bank diagnostic assertions\n";

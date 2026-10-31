@@ -2,9 +2,9 @@
 
 Plugin independiente, gratuito y de código abierto para integrar los pagos REST de **LAFISE Costa Rica en WooCommerce**, desarrollado por [Y2KWebs](https://y2kwebs.com/). Sin registro obligatorio, telemetría ni anuncios en el checkout.
 
-[Descargar ZIP instalable](https://github.com/Y2KWebs/y2kwebs-lafise/releases/tag/v0.2.0) · [Instalación y soporte profesional](https://y2kwebs.com/) · [Reportar un problema](https://github.com/Y2KWebs/y2kwebs-lafise/issues/new/choose)
+[Última release publicada: 0.2.0](https://github.com/Y2KWebs/y2kwebs-lafise/releases/tag/v0.2.0) · [Instalación y soporte profesional](https://y2kwebs.com/) · [Reportar un problema](https://github.com/Y2KWebs/y2kwebs-lafise/issues/new/choose)
 
-**Versión 0.2.0 — primera versión pública, preliminar.** Es una pasarela funcional basada en una integración utilizada con pagos reales, con casos concretos pendientes de comprobar. En esta versión se ha verificado un pago real de USD 1, con pedido completado e intento aprobado. Las pruebas automatizadas utilizan un banco simulado; la cobertura y los pendientes se distinguen en [resultados y limitaciones](docs/validation.md). Es un desarrollo independiente, no un plugin oficial de LAFISE; no se afirma una alianza ni respaldo del banco.
+**Versión 0.2.1 — preliminar, preparada para revisión y aún no publicada.** Pasarela funcional con pagos reales comprobados en WooCommerce. Con esta versión se ha verificado un pago de USD 1 con desafío 3DS manual completado por el titular, pedido pagado e intento aprobado. Las pruebas automatizadas utilizan un banco simulado; quedan escenarios específicos por ampliar, según los [resultados y limitaciones](docs/validation.md). Es un desarrollo independiente, no un plugin oficial de LAFISE; no se afirma una alianza ni respaldo del banco.
 
 ## Funcionalidades
 
@@ -14,7 +14,7 @@ Plugin independiente, gratuito y de código abierto para integrar los pagos REST
 - Consulta de estado sin repetir el cobro. Los resultados inciertos mantienen el pedido en espera para revisión.
 - APIs de pedidos de WooCommerce compatibles con HPOS y almacenamiento clásico.
 
-**Limitaciones:** no hay devoluciones bancarias automáticas. La aprobación directa de Sale y los códigos de rechazo definitivo necesitan evidencia adicional; las respuestas no reconocidas no se repiten automáticamente. Queda por ampliar el registro de pruebas por moneda, impuestos y navegador, según la [cobertura documentada](docs/validation.md).
+**Limitaciones:** no hay devoluciones bancarias automáticas. La aprobación y el rechazo financieros directos de Sale siguen sin clasificación automática. Process3DS reconoce únicamente el rechazo `59` validado y sin autorización; los demás resultados no reconocidos permanecen en revisión. Queda por ampliar la cobertura de ramas 3DS, monedas, impuestos y navegadores, según la [cobertura documentada](docs/validation.md).
 
 ## Así se integra
 
@@ -33,7 +33,7 @@ Estas capturas proceden de un entorno local con banco simulado y datos ficticios
 Requisitos mínimos del proyecto: WordPress 6.9, WooCommerce 10.3, PHP 8.2, OpenSSL, DOM, MySQL/MariaDB con GET_LOCK, HTTPS y enlaces permanentes. Las versiones efectivamente verificadas están en [validación](docs/validation.md); no se afirma compatibilidad con todas las versiones posteriores.
 
 1. Instala WooCommerce y configura HTTPS, enlaces permanentes y la moneda de la tienda.
-2. Utiliza el ZIP instalable `y2kwebs-lafise-0.2.0.zip` adjunto a la release preliminar, cuando esté publicada. También puedes generarlo desde el código con `python scripts/package.py`. El ZIP de código fuente generado por GitHub no es el paquete de instalación verificado.
+2. Para revisar 0.2.1, genera `dist/y2kwebs-lafise-0.2.1.zip` con `python scripts/package.py`. La release publicada continúa siendo 0.2.0. El ZIP de código fuente generado por GitHub no es el paquete de instalación verificado.
 3. Sube el ZIP desde **Plugins → Añadir plugin → Subir plugin** y actívalo.
 4. Abre **WooCommerce → Ajustes → Pagos → LAFISE — Y2KWebs** e introduce las credenciales de tu comercio.
 5. Guarda y comprueba la conexión sin cobro. Esa comprobación verifica autenticación y formato de llave pública; no sustituye una prueba de pago.

@@ -47,4 +47,6 @@ El primer comando revisa los archivos que Git incluiría, también antes del pri
 
 GitHub Actions ejecuta las comprobaciones de sintaxis, protocolo, transporte, JWE y empaquetado con PHP 8.2/8.4, Node.js 24 y Python 3.11. Una segunda fase levanta el entorno Docker, instala WooCommerce 10.3.0, ejecuta integración clásica/HPOS y ajustes y verifica la copia extraída del ZIP. La configuración del banco es ficticia; no hay secretos de comercio en CI. La compatibilidad adicional con WooCommerce 11.2.1 está documentada como prueba manual en [validación](validation.md).
 
+La preparación local de 0.2.1 actualiza también las referencias del workflow al nuevo paquete, pero no ejecuta CI remoto. Las regresiones nuevas cubren firma por código sin alternativas, rechazo de contratos inseguros antes de HTTP, desafío directo con confirmación única y rechazo `59` con bloqueo de resultados contradictorios. Los datos bancarios son sintéticos; no copies las respuestas originales a los fixtures.
+
 Mantén propuestas comerciales, documentos del banco, credenciales, registros y capturas reales fuera del repositorio. Revisa `git status --short` antes de cada commit: `.gitignore` no elimina archivos ya versionados.

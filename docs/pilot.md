@@ -18,6 +18,8 @@ No hay un paso de aprobación/certificación en el plugin. Las comprobaciones si
 | Caso | Resultado esperado |
 |---|---|
 | Fingerprint y desafío | Un intento, UUID correlacionado, firma y resultado financiero válidos |
+| Desafío directo desde Sale | Firma que incluye código y unidades menores; pago confirmado solo tras el resultado financiero final |
+| Process3DS con rechazo 59 | Rechazo validado sin autorización permite otro intento solicitado por el comprador; contradicciones o firma inválida permanecen en revisión |
 | Emisor nuevo | Destino recibido del transporte bancario autenticado; no listas mundiales de dominios |
 | Autenticación caducada sin siguiente envío | Cerrar intento y permitir otro pago del mismo pedido |
 | Timeout tras envío financiero | Retener pedido y consultar; nunca repetir automáticamente |

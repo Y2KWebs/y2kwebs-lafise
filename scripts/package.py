@@ -5,7 +5,7 @@ import re
 import zipfile
 
 ROOT = Path(__file__).resolve().parent.parent
-VERSION = "0.2.0"
+VERSION = "0.2.1"
 IMAGES = frozenset(("docs/images/checkout.jpg", "docs/images/settings.jpg"))
 # New files must be deliberately added; never recursively package documentation.
 FILES = (

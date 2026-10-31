@@ -111,6 +111,7 @@ final class Bank
         $this->diagnostic = ['operation' => $operation, 'stage' => 'authentication'];
         $submitted = false;
         try {
+            $this->protocol->assertValid();
             $auth ??= $this->authenticate();
             $context = array_merge($this->config->context(), $context);
             $payload = $this->request($operation, $context, $auth, $submitted);
@@ -130,6 +131,8 @@ final class Bank
                 'Incomplete bank result.' => 'response_fields_missing',
                 'Mismatched financial result.' => 'financial_result_mismatch',
                 'Invalid financial signature.' => 'signature_mismatch',
+                'Conflicting decline authorization.' => 'decline_authorization_conflict',
+                'Invalid signature variant contract.' => 'protocol_contract_invalid',
                 default => 'response_validation_failed',
             };
             if ($operation === 'sale' && !$submitted) {
