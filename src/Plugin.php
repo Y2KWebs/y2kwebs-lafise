@@ -75,7 +75,10 @@ final class Plugin
         if (!function_exists('is_checkout') || !is_checkout() || is_order_received_page()) {
             return;
         }
-        if (!defined('DONOTCACHEPAGE')) { define('DONOTCACHEPAGE', true); }
+        if (!defined('DONOTCACHEPAGE')) {
+            // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound -- Standard cache-plugin interoperability flag; its name must not change.
+            define('DONOTCACHEPAGE', true);
+        }
         Payments::session();
         WC()->session->set_customer_session_cookie(true);
         wp_enqueue_style('y2k-lafise', plugins_url('assets/checkout.css', Y2K_LAFISE_FILE), [], Y2K_LAFISE_VERSION);

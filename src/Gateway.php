@@ -68,7 +68,7 @@ final class Gateway extends \WC_Payment_Gateway
     {
         $value = is_string($value) ? wp_unslash($value) : '';
         if (strlen($value) > 4096 || preg_match('/[\x00-\x1f\x7f]/', $value)) {
-            throw new \Exception(__('Credencial no válida.', 'y2kwebs-lafise'));
+            throw new \Exception(esc_html__('Credencial no válida.', 'y2kwebs-lafise'));
         }
         return $value;
     }
@@ -81,7 +81,14 @@ final class Gateway extends \WC_Payment_Gateway
     public function payment_fields(): void
     {
         echo '<p>' . esc_html($this->description) . '</p>';
-        echo self::fields(); // All markup is constant; translated labels escaped within fields().
+        echo wp_kses(self::fields(), self::fieldTags());
+    }
+
+    public static function fieldTags(): array
+    {
+        return ['div' => ['class' => true, 'data-y2k-card' => true], 'label' => [],
+            'input' => ['data-card' => true, 'type' => true, 'autocomplete' => true, 'inputmode' => true, 'maxlength' => true],
+            'p' => ['data-y2k-error' => true, 'role' => true]];
     }
 
     public static function fields(): string
@@ -110,7 +117,7 @@ final class Gateway extends \WC_Payment_Gateway
             }
             $input = [];
             foreach (['y2k_card', 'y2k_ticket', 'y2k_csrf', 'y2k_width', 'y2k_height'] as $key) {
-                $input[$key] = isset($_POST[$key]) && is_string($_POST[$key]) ? wp_unslash($_POST[$key]) : '';
+                $input[$key] = Routes::post($key);
             }
             $attempt = (new Payments())->start($order, $input);
             return ['result' => 'success', 'redirect' => Payments::url('verify', $attempt)];

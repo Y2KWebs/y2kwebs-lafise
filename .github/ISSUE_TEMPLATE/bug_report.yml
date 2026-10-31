@@ -11,7 +11,7 @@ body:
     attributes:
       label: Versiones
       description: Plugin, WordPress, WooCommerce y PHP.
-      placeholder: Plugin 0.2.0 / WordPress 7.1.4 / WooCommerce 11.2.1 / PHP 8.2
+      placeholder: Plugin 0.2.1 / WordPress 7.1.4 / WooCommerce 11.2.1 / PHP 8.2
     validations:
       required: true
   - type: dropdown

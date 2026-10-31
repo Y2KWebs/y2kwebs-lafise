@@ -23,7 +23,7 @@ class PackageTests(unittest.TestCase):
                 path.write_bytes(b"\xff\xd8\xffSYNTHETIC-IMAGE\xff\xd9")
             else:
                 path.write_text("Synthetic public file\n", encoding="utf-8")
-        (self.root / "y2kwebs-lafise.php").write_text("<?php\n/**\n * Version: 0.2.0\n */\n", encoding="utf-8")
+        (self.root / "y2kwebs-lafise.php").write_text("<?php\n/**\n * Version: 0.2.1\n */\n", encoding="utf-8")
 
     def test_allowlist_checksum_and_reproducibility(self):
         for name in ("docs/internal-notes.md", "src/debug.log", "config/credentials.local.php", ".runtime/access.txt", "tests/fixture.php"):

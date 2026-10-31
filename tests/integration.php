@@ -23,6 +23,8 @@ $key = openssl_pkey_new(['private_key_bits' => 2048]);
 $pem = openssl_pkey_get_details($key)['key'];
 $calls = [];
 $mode = 'fingerprint';
+$completed = 0;
+add_action('woocommerce_payment_complete', static function () use (&$completed): void { $completed++; });
 $id = '00000000-0000-4000-8000-000000000001';
 $encode = static fn ($v) => rtrim(strtr(base64_encode(is_array($v) ? json_encode($v) : $v), '+/', '-_'), '=');
 $http = static function ($pre, $args, $url) use (&$calls, &$mode, $pem, $id, $encode) {
@@ -39,10 +41,22 @@ $http = static function ($pre, $args, $url) use (&$calls, &$mode, $pem, $id, $en
             'Merchant_Id' => 'FIXTUREM', 'Terminal_Id' => 'FIXTURET', 'Ref_1' => null, 'Ref_3' => null],
             'ApiSecurity' => ['Message_signature' => hash('sha256', 'fixture-key' . '100' . 'FIXTUREM' . '0' . 'USD')],
             'ExtraFile' => ['threeDSMethodURL' => 'https://issuer.bank.com/method', 'threeDSMethodData' => $encode(['threeDSServerTransID' => $id])]];
+        if (str_starts_with($mode, 'direct')) {
+            $body['ResponseCode'] = '3DS-PRC-002';
+            $body['ApiSecurity']['Message_signature'] = hash('sha256', 'fixture-key' . '3DS-PRC-002' . '100' . 'FIXTUREM' . '0' . 'USD');
+            $body['ExtraFile'] = ['Action' => 'https://issuer.bank.com/acs', 'Creq' => $encode(['threeDSServerTransID' => $id]), 'ThreeDSSessionData' => $encode($id)];
+        }
     } elseif ($operation === 'Process3DS') {
         $body = ['ResponseCode' => '00', 'PaymentInformation' => ['Amount' => '1.00', 'Currency_code' => 'USD',
             'Merchant_Id' => 'FIXTUREM', 'Terminal_Id' => 'FIXTURET', 'AuthorizationCode' => 'TEST', 'Ref1' => 'BANKREF', 'Ref3' => '000001'],
             'ApiSecurity' => ['Message_signature' => hash('sha256', 'fixture-key' . 'BANKREF' . '00' . '1.00' . 'FIXTUREM' . '0' . 'USD')]];
+        if (in_array($mode, ['direct-decline', 'direct-forged', 'direct-conflict', 'direct-unknown'], true)) {
+            $code = $mode === 'direct-unknown' ? '96' : '59';
+            $body['ResponseCode'] = $code;
+            $body['PaymentInformation']['AuthorizationCode'] = $mode === 'direct-conflict' ? 'CONTRADICTORY' : '';
+            $body['ApiSecurity']['Message_signature'] = $mode === 'direct-forged' ? str_repeat('0', 64)
+                : hash('sha256', 'fixture-key' . 'BANKREF' . $code . '1.00' . 'FIXTUREM' . '0' . 'USD');
+        }
     } else { return new WP_Error('test_unexpected_request', 'Unexpected operation.'); }
     return ['response' => ['code' => 200, 'message' => 'OK'], 'headers' => [], 'body' => wp_json_encode($body), 'cookies' => []];
 };
@@ -153,6 +167,53 @@ try {
     $check(count(array_filter($calls,fn($c)=>$c==='Process3DS'))===$beforeProcess,'Late callback cannot submit expired authentication');
     $retry = $service->start(wc_get_order($retryOrder->get_id()),$input());
     $check($retry['reference']!==$expired['reference'] && $retry['state']==='fingerprint','Retry uses new attempt in same order');
+
+    $challengeCallback = ['cres' => $encode(['threeDSServerTransID' => $id, 'transStatus' => 'Y']), 'threeDSSessionData' => $encode($id)];
+    $mode = 'direct-approved';
+    $directOrder = $create();
+    $stock = wc_get_product($product->get_id())->get_stock_quantity();
+    $beforeCompleted = $completed;
+    $direct = $service->start($directOrder, $input());
+    $status = $service->status($direct['reference'], $direct['data']['token']);
+    $check($direct['state'] === 'challenge' && $direct['data']['transaction_id'] === $id, 'Direct Sale challenge stores correlated UUID');
+    $check(!wc_get_order($directOrder->get_id())->is_paid() && $status['redirect'] === null && $status['retry'] === null,
+        'Challenge cannot confirm payment or permit another sale');
+    $check($completed === $beforeCompleted, 'No payment completion before financial result');
+    $beforeProcess = count(array_filter($calls, fn ($c) => $c === 'Process3DS'));
+    $forgedCallback = $challengeCallback;
+    $forgedCallback['cres'] = $bad;
+    try { $service->callback($direct['reference'], $direct['data']['token'], $forgedCallback); } catch (DomainException) {}
+    $check(count(array_filter($calls, fn ($c) => $c === 'Process3DS')) === $beforeProcess, 'Forged direct challenge callback never reaches bank');
+    $service->callback($direct['reference'], $direct['data']['token'], $challengeCallback);
+    $service->callback($direct['reference'], $direct['data']['token'], $challengeCallback);
+    $check(wc_get_order($directOrder->get_id())->is_paid(), 'Verified direct challenge final result pays order');
+    $check($completed === $beforeCompleted + 1, 'Direct challenge completes order only once');
+    $check(count(array_filter($calls, fn ($c) => $c === 'Process3DS')) === $beforeProcess + 1, 'Repeated challenge callback never repeats Process3DS');
+    $check(wc_get_product($product->get_id())->get_stock_quantity() === $stock - 1, 'Direct challenge reduces stock exactly once');
+
+    foreach (['direct-decline', 'direct-forged', 'direct-conflict', 'direct-unknown'] as $mode) {
+        $declineOrder = $create();
+        $attempt = $service->start($declineOrder, $input());
+        $beforeCompleted = $completed;
+        $beforeProcess = count(array_filter($calls, fn ($c) => $c === 'Process3DS'));
+        $service->callback($attempt['reference'], $attempt['data']['token'], $challengeCallback);
+        $service->callback($attempt['reference'], $attempt['data']['token'], $challengeCallback);
+        $status = $service->status($attempt['reference'], $attempt['data']['token']);
+        $verified = $mode === 'direct-decline';
+        $check($status['state'] === ($verified ? 'declined' : 'unknown') && ($status['retry'] !== null) === $verified,
+            'Only verified decline permits retry: ' . $mode);
+        $check(wc_get_order($declineOrder->get_id())->get_status() === ($verified ? 'failed' : 'on-hold'), 'Order follows verified outcome: ' . $mode);
+        $check(!wc_get_order($declineOrder->get_id())->is_paid() && $completed === $beforeCompleted, 'Authentication success alone never pays order: ' . $mode);
+        $check(count(array_filter($calls, fn ($c) => $c === 'Process3DS')) === $beforeProcess + 1, 'Final callback deduplicated: ' . $mode);
+        $beforeSale = count(array_filter($calls, fn ($c) => $c === 'Sale'));
+        if ($verified) {
+            $next = $service->start(wc_get_order($declineOrder->get_id()), $input());
+            $check($next['reference'] !== $attempt['reference'] && $next['state'] === 'challenge', 'Verified 59 allows a fresh explicitly requested attempt');
+        } else {
+            $service->start(wc_get_order($declineOrder->get_id()), ['y2k_csrf' => Payments::csrf()]);
+        }
+        $check(count(array_filter($calls, fn ($c) => $c === 'Sale')) === $beforeSale + ($verified ? 1 : 0), 'Unknown outcomes cannot resend Sale: ' . $mode);
+    }
     echo 'PASS: '.$checks.' integration assertions; HPOS='.(get_option('woocommerce_custom_orders_table_enabled') ?: 'no').'; WordPress='.get_bloginfo('version').'; WooCommerce='.WC_VERSION.'; PHP='.PHP_VERSION."\n";
 } finally {
     remove_filter('pre_http_request',$http,10);

@@ -10,6 +10,32 @@ final class Protocol
     {
         $json = ltrim(file_get_contents(dirname(__DIR__) . '/config/protocol.json'), "\xEF\xBB\xBF");
         $this->definition = json_decode($json, true, 32, JSON_THROW_ON_ERROR)['operations'];
+        $this->assertValid();
+    }
+
+    /** Signature overrides may authenticate 3DS continuations, never financial outcomes. */
+    public function assertValid(): void
+    {
+        foreach ($this->definition as $name => $operation) {
+            $schema = $operation['response'] ?? [];
+            if (!array_key_exists('signature_by_code', $schema)) { continue; }
+            $variants = $schema['signature_by_code'];
+            if (!is_array($variants) || ($variants !== [] && ($name !== 'sale' || ($operation['authorization'] ?? '') !== 'bearer'))) {
+                throw new \DomainException('Invalid signature variant contract.');
+            }
+            foreach ($variants as $code => $rule) {
+                $states = $schema['states'] ?? [];
+                $fields = is_array($rule) ? ($rule['fields'] ?? null) : null;
+                if (!is_string($code) || !in_array($code, array_merge($states['fingerprint'] ?? [], $states['challenge'] ?? []), true)
+                    || in_array($code, array_merge($states['approved'] ?? [], $states['declined'] ?? []), true)
+                    || !is_array($rule) || ($rule['algorithm'] ?? '') !== 'sha256'
+                    || !is_array($fields) || !array_is_list($fields)
+                    || count(array_filter($fields, 'is_string')) !== count($fields)
+                    || array_diff(['merchant_pay_id', 'bank_reference', 'code', 'amount', 'merchant', 'currency'], $fields) !== []) {
+                    throw new \DomainException('Invalid signature variant contract.');
+                }
+            }
+        }
     }
 
     public static function path(array $data, string $path): mixed
@@ -48,6 +74,7 @@ final class Protocol
 
     public function request(string $operation, array $context): array
     {
+        $this->assertValid();
         $definition = $this->definition[$operation] ?? throw new \DomainException('Unsupported operation.');
         foreach ($definition['signatures'] ?? [] as $name => $rule) {
             $context[$name] = self::sign($rule['fields'], $context);
@@ -63,6 +90,7 @@ final class Protocol
 
     public function validate(string $operation, array $payload, array $context, array $prior = [], bool $authenticatedTransport = false): array
     {
+        $this->assertValid();
         if ($operation === 'inquire') {
             if (!$authenticatedTransport) { throw new \DomainException('Unauthenticated bank query.'); }
             $extra = $payload['ExtraFile'] ?? [];
@@ -105,7 +133,8 @@ final class Protocol
             || $data['terminal'] !== $context['terminal_id'] || $data['currency'] !== $context['currency']) {
             throw new \DomainException('Mismatched financial result.');
         }
-        $signature = self::sign($schema['signature']['fields'], array_merge($context, $data));
+        $rule = $schema['signature_by_code'][$data['code']] ?? $schema['signature'];
+        $signature = self::sign($rule['fields'], array_merge($context, $data));
         if (!preg_match('/^[a-f0-9]{64}$/iD', $data['signature']) || !hash_equals($signature, strtolower($data['signature']))) {
             throw new \DomainException('Invalid financial signature.');
         }
@@ -115,9 +144,12 @@ final class Protocol
                 $state = $candidate;
             }
         }
-        // Direct Sale and decline codes remain disabled until a reviewed protocol revision adds evidence.
+        // Direct financial Sale outcomes remain unclassified pending additional evidence.
         if ($state === 'approved' && (!$data['bank_reference'] || !$data['authorization'])) {
             throw new \DomainException('Incomplete approval.');
+        }
+        if ($state === 'declined' && $data['authorization'] !== '') {
+            throw new \DomainException('Conflicting decline authorization.');
         }
         unset($data['signature']);
         $result = ['state' => $state, 'receipt' => $data, 'ref3' => trim($data['ref3'])];

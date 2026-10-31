@@ -1,6 +1,6 @@
 # Arquitectura y flujo de pago
 
-El plugin conecta directamente la tienda con la API REST de LAFISE Costa Rica. Y2KWebs no opera un intermediario de pagos. La versión 0.2.0 es preliminar; consulta la [validación](validation.md).
+El plugin conecta directamente la tienda con la API REST de LAFISE Costa Rica. Y2KWebs no opera un intermediario de pagos. La versión 0.2.1 es preliminar; consulta la [validación](validation.md).
 
 ## Componentes
 
@@ -17,6 +17,12 @@ El plugin conecta directamente la tienda con la API REST de LAFISE Costa Rica. Y
 3. Si el banco solicita fingerprint o desafío 3DS, el plugin prepara la acción y valida su correlación antes de procesar el resultado.
 4. Una respuesta financiera reconocida debe superar las comprobaciones de firma, importe, moneda y comercio. Una respuesta incierta conserva el pedido en espera para consulta o revisión.
 5. La consulta de estado no repite la venta. El almacenamiento cifrado de intentos y los bloqueos de concurrencia apoyan la deduplicación.
+
+## Firma de desafío directo y rechazo validado
+
+El contrato interno admite `signature_by_code` exclusivamente para continuaciones 3DS de Sale con transporte bearer. La variante de `3DS-PRC-002` firma `merchant_pay_id + bank_reference + code + amount + merchant + tax + currency` mediante SHA-256; el importe conserva las unidades menores de Sale y una referencia bancaria nula se convierte en cadena vacía. La selección usa una sola regla por código, sin alternativas por descarte. Fingerprint conserva la firma sin código y Process3DS conserva su contrato anterior. Las variantes deben incluir código, secreto, referencia, importe, comercio y moneda, y no pueden clasificar aprobaciones ni rechazos financieros. El contrato se valida antes de HTTP y al validar las respuestas.
+
+Process3DS clasifica `59` como rechazo solo con firma y datos financieros válidos y autorización vacía. Una autorización contradictoria produce un resultado incierto con diagnóstico fijo `decline_authorization_conflict`; no habilita otro cobro. Las listas de aprobación y rechazo financieros de Sale siguen vacías. El desafío y el CRes por sí solos no completan el pedido: se requiere un resultado financiero validado. No cambian los endpoints públicos, ajustes ni esquema de almacenamiento.
 
 ## Límites y datos
 

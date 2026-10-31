@@ -73,6 +73,7 @@ jobs:
           docker compose -f tests/compose.yml run --rm cli wp core install --url=http://localhost:8087 --title=Local --admin_user=localtester --admin_password=local-only-test-password --admin_email=test@example.invalid --skip-email
           docker compose -f tests/compose.yml run --rm cli wp plugin install woocommerce --version=10.3.0 --activate
           docker compose -f tests/compose.yml run --rm cli wp plugin activate y2kwebs-lafise
+          docker compose -f tests/compose.yml run --rm cli wp rewrite structure '/%postname%/'
       - name: Both order storages and protected settings
         run: |
           for storage in no yes; do
@@ -82,23 +83,31 @@ jobs:
             docker compose -f tests/compose.yml run --rm cli wp eval-file wp-content/plugins/y2kwebs-lafise/tests/integration.php
           done
           docker compose -f tests/compose.yml run --rm cli wp eval-file wp-content/plugins/y2kwebs-lafise/tests/settings.php
+          docker compose -f tests/compose.yml run --rm cli wp eval-file wp-content/plugins/y2kwebs-lafise/tests/security.php
       - name: Build and exercise the release ZIP
         run: |
           python scripts/package.py
-          python -m zipfile -e dist/y2kwebs-lafise-0.2.0.zip .runtime/release-check
+          python -m zipfile -e dist/y2kwebs-lafise-0.2.1.zip .runtime/release-check
           release_mount="$GITHUB_WORKSPACE/.runtime/release-check/y2kwebs-lafise:/var/www/html/wp-content/plugins/y2kwebs-lafise:ro"
           smoke_mount="$GITHUB_WORKSPACE/tests/release-smoke.php:/tmp/y2k-release-smoke.php:ro"
           docker compose -f tests/compose.yml run --rm --volume "$release_mount" cli wp plugin deactivate y2kwebs-lafise
           docker compose -f tests/compose.yml run --rm --volume "$release_mount" cli wp plugin activate y2kwebs-lafise
           docker compose -f tests/compose.yml run --rm --volume "$release_mount" --volume "$smoke_mount" cli wp eval-file /tmp/y2k-release-smoke.php
           cd dist
-          sha256sum --check y2kwebs-lafise-0.2.0.zip.sha256
+          sha256sum --check y2kwebs-lafise-0.2.1.zip.sha256
+      - name: Plugin Check on the installable package
+        run: |
+          docker compose -f tests/compose.yml run --rm cli wp plugin install plugin-check --version=2.1.0 --activate
+          release_mount="$GITHUB_WORKSPACE/.runtime/release-check/y2kwebs-lafise:/var/www/html/wp-content/plugins/y2kwebs-lafise:ro"
+          docker compose -f tests/compose.yml run --rm --volume "$release_mount" cli wp --require=/var/www/html/wp-content/plugins/plugin-check/cli.php plugin check y2kwebs-lafise --format=csv --fields=type,code > .runtime/plugin-check.csv
+          cat .runtime/plugin-check.csv
+          if grep -qE '^"?(ERROR|WARNING)"?,' .runtime/plugin-check.csv; then exit 1; fi
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: y2kwebs-lafise-0.2.0
+          name: y2kwebs-lafise-0.2.1
           path: |
-            dist/y2kwebs-lafise-0.2.0.zip
-            dist/y2kwebs-lafise-0.2.0.zip.sha256
+            dist/y2kwebs-lafise-0.2.1.zip
+            dist/y2kwebs-lafise-0.2.1.zip.sha256
           if-no-files-found: error
           retention-days: 14
       - name: Stop disposable services
