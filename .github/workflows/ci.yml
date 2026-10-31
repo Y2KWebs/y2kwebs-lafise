@@ -73,6 +73,7 @@ jobs:
           docker compose -f tests/compose.yml run --rm cli wp core install --url=http://localhost:8087 --title=Local --admin_user=localtester --admin_password=local-only-test-password --admin_email=test@example.invalid --skip-email
           docker compose -f tests/compose.yml run --rm cli wp plugin install woocommerce --version=10.3.0 --activate
           docker compose -f tests/compose.yml run --rm cli wp plugin activate y2kwebs-lafise
+          docker compose -f tests/compose.yml run --rm cli wp rewrite structure '/%postname%/'
       - name: Both order storages and protected settings
         run: |
           for storage in no yes; do

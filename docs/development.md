@@ -22,6 +22,8 @@ docker compose -f tests/compose.yml up -d wordpress db
 docker compose -f tests/compose.yml run --rm cli wp core install --url=http://localhost:8087 --title=Local --admin_user=localtester --admin_password=local-only-test-password --admin_email=test@example.invalid --skip-email
 docker compose -f tests/compose.yml run --rm cli wp plugin install woocommerce --version=10.3.0 --activate
 docker compose -f tests/compose.yml run --rm cli wp plugin activate y2kwebs-lafise
+
+docker compose -f tests/compose.yml run --rm cli wp rewrite structure '/%postname%/'
 docker compose -f tests/compose.yml run --rm cli wp wc hpos sync
 docker compose -f tests/compose.yml run --rm cli wp option update woocommerce_custom_orders_table_enabled no
 docker compose -f tests/compose.yml run --rm cli wp eval-file wp-content/plugins/y2kwebs-lafise/tests/integration.php
