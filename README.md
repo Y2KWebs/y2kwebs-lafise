@@ -2,9 +2,9 @@
 
 Plugin independiente, gratuito y de código abierto para integrar los pagos REST de **LAFISE Costa Rica en WooCommerce**, desarrollado por [Y2KWebs](https://y2kwebs.com/). Sin registro obligatorio, telemetría ni anuncios en el checkout.
 
-[Última release publicada: 0.2.0](https://github.com/Y2KWebs/y2kwebs-lafise/releases/tag/v0.2.0) · [Instalación y soporte profesional](https://y2kwebs.com/) · [Reportar un problema](https://github.com/Y2KWebs/y2kwebs-lafise/issues/new/choose)
+[WordPress.org: versión 0.2.1](https://wordpress.org/plugins/y2kwebs-lafise/) · [GitHub: release 0.2.1](https://github.com/Y2KWebs/y2kwebs-lafise/releases/tag/v0.2.1) · [Instalación y soporte profesional](https://y2kwebs.com/) · [Reportar un problema](https://github.com/Y2KWebs/y2kwebs-lafise/issues/new/choose)
 
-**Versión 0.2.1 — preliminar, preparada para revisión y aún no publicada.** Pasarela funcional con pagos reales comprobados en WooCommerce. Con esta versión se ha verificado un pago de USD 1 con desafío 3DS manual completado por el titular, pedido pagado e intento aprobado. Las pruebas automatizadas utilizan un banco simulado; quedan escenarios específicos por ampliar, según los [resultados y limitaciones](docs/validation.md). Es un desarrollo independiente, no un plugin oficial de LAFISE; no se afirma una alianza ni respaldo del banco.
+**Versión 0.2.1 — publicada en WordPress.org el 2 de noviembre de 2026.** Pasarela funcional con pagos reales comprobados en WooCommerce. Con esta versión se ha verificado un pago de USD 1 con desafío 3DS manual completado por el titular, pedido pagado e intento aprobado. Las pruebas automatizadas utilizan un banco simulado; quedan escenarios específicos por ampliar, según los [resultados y limitaciones](docs/validation.md). Es un desarrollo independiente, no un plugin oficial de LAFISE; no se afirma una alianza ni respaldo del banco.
 
 ## Funcionalidades
 
@@ -33,8 +33,8 @@ Estas capturas proceden de un entorno local con banco simulado y datos ficticios
 Requisitos mínimos del proyecto: WordPress 6.9, WooCommerce 10.3, PHP 8.2, OpenSSL, DOM, MySQL/MariaDB con GET_LOCK, HTTPS y enlaces permanentes. Las versiones efectivamente verificadas están en [validación](docs/validation.md); no se afirma compatibilidad con todas las versiones posteriores.
 
 1. Instala WooCommerce y configura HTTPS, enlaces permanentes y la moneda de la tienda.
-2. Para revisar 0.2.1, genera `dist/y2kwebs-lafise-0.2.1.zip` con `python scripts/package.py`. La release publicada continúa siendo 0.2.0. El ZIP de código fuente generado por GitHub no es el paquete de instalación verificado.
-3. Sube el ZIP desde **Plugins → Añadir plugin → Subir plugin** y actívalo.
+2. Busca **Y2KWebs Gateway for LAFISE** en **Plugins → Añadir plugin**, o descarga el ZIP desde la [ficha oficial del directorio](https://wordpress.org/plugins/y2kwebs-lafise/). El ZIP de código fuente generado por GitHub no es el paquete de instalación verificado.
+3. Instala y activa el plugin. Si descargaste el ZIP, súbelo desde **Plugins → Añadir plugin → Subir plugin**.
 4. Abre **WooCommerce → Ajustes → Pagos → LAFISE — Y2KWebs** e introduce las credenciales de tu comercio.
 5. Guarda y comprueba la conexión sin cobro. Esa comprobación verifica autenticación y formato de llave pública; no sustituye una prueba de pago.
 6. Para una evaluación controlada, configura el modo **Pruebas** y un máximo bajo. Coordina los pagos según la [guía de pruebas](docs/pilot.md).
@@ -45,6 +45,7 @@ La tarjeta se cifra en el navegador antes de enviarse a WordPress. La autenticac
 
 ## Documentación y desarrollo
 
+- [Publicación y mantenimiento en WordPress.org](https://github.com/Y2KWebs/y2kwebs-lafise/blob/main/docs/wordpress-org.md)
 - [Configuración y API administrativa](docs/configuration.md)
 - [Arquitectura y flujo de pago](docs/architecture.md)
 - [Pruebas bancarias controladas](docs/pilot.md)

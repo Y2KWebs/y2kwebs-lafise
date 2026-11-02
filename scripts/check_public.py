@@ -6,6 +6,14 @@ from urllib.parse import unquote, urlsplit
 
 from package import ROOT, SECRET_PATTERN, IMAGES
 
+# Exact, visually reviewed directory graphics; these never enter the installable ZIP.
+DIRECTORY_ARTWORK = {
+    "design/wordpress-org/exports/banner-772x250.png": (772, 250, 4_000_000),
+    "design/wordpress-org/exports/banner-1544x500.png": (1544, 500, 4_000_000),
+    "design/wordpress-org/exports/icon-128x128.png": (128, 128, 1_000_000),
+    "design/wordpress-org/exports/icon-256x256.png": (256, 256, 1_000_000),
+}
+
 
 def check(root=ROOT):
     root = Path(root).resolve()
@@ -29,9 +37,16 @@ def check(root=ROOT):
         try:
             content = path.read_text(encoding="utf-8-sig")
         except UnicodeDecodeError:
-            # Only the two deliberately captured, manually reviewed synthetic screenshots are public.
+            # Admit only the individually reviewed screenshots and directory artwork.
             data = path.read_bytes()
-            if name not in IMAGES or not data.startswith(b"\xff\xd8\xff") or not data.endswith(b"\xff\xd9") or len(data) > 2_000_000:
+            if name in DIRECTORY_ARTWORK:
+                width, height, limit = DIRECTORY_ARTWORK[name]
+                if (not data.startswith(b"\x89PNG\r\n\x1a\n") or data[12:16] != b"IHDR"
+                        or int.from_bytes(data[16:20], "big") != width
+                        or int.from_bytes(data[20:24], "big") != height or len(data) > limit):
+                    errors.append(f"{name}: invalid directory artwork")
+                    continue
+            elif name not in IMAGES or not data.startswith(b"\xff\xd8\xff") or not data.endswith(b"\xff\xd9") or len(data) > 2_000_000:
                 errors.append(f"{name}: binary file requires explicit manual review")
                 continue
             content = data.decode("utf-8", errors="ignore")
