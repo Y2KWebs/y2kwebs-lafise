@@ -1,6 +1,7 @@
 <?php
 /**
  * Plugin Name: Y2KWebs Gateway for LAFISE
+ * Plugin URI: https://github.com/Y2KWebs/y2kwebs-lafise
  * Description: Pagos con tarjeta LAFISE Costa Rica para WooCommerce. Configura las credenciales de tu comercio desde el administrador.
  * Version: 0.2.1
  * Author: Y2KWebs
