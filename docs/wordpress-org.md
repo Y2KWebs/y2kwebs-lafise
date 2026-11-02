@@ -89,6 +89,8 @@ El español incluido funciona antes de la validación. El aviso «Este plugin a�
 
 En la comprobación posterior a la publicación, Development ya exponía las 70 cadenas inglesas. Stable todavía exponía las 57 anteriores y ambos readmes las 56 anteriores; los catálogos nuevos contienen 70 entradas de software y 61 de ficha por locale. Se prepararon los cuatro PO y las instrucciones de ocho importaciones para el mantenedor. La carga mediante navegador no llegó a enviarse porque la extensión carecía de acceso a archivos locales; el mantenedor se ofreció a importarlos manualmente. No hay propuestas importadas ni traducciones aprobadas verificadas en esta entrega, y la API no devuelve paquetes oficiales para 0.2.2.
 
+Una comprobación posterior confirmó la actualización de los ocho destinos: 70 fuentes de software y 61 de ficha por locale, con catálogos preparados que coinciden con las fuentes oficiales. La importación manual ya puede cubrirlas completas; la aprobación y la generación de paquetes siguen pendientes.
+
 ## Referencias oficiales
 
 - [Proceso de envío y requisitos](https://developer.wordpress.org/plugins/wordpress-org/plugin-developer-faq/)
