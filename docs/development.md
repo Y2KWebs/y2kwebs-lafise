@@ -7,7 +7,8 @@ Requiere PHP con OpenSSL y DOM, Node.js con WebCrypto, Python 3.9 o posterior y 
 ```text
 php tests/unit.php
 php tests/bank.php
-node --test tests/jwe.test.mjs
+node --test tests/jwe.test.mjs tests/verify-i18n.test.mjs
+python scripts/build_translations.py --check
 python -m unittest discover -s tests -p "test_*.py"
 ```
 
@@ -22,6 +23,7 @@ docker compose -f tests/compose.yml up -d wordpress db
 docker compose -f tests/compose.yml run --rm cli wp core install --url=http://localhost:8087 --title=Local --admin_user=localtester --admin_password=local-only-test-password --admin_email=test@example.invalid --skip-email
 docker compose -f tests/compose.yml run --rm cli wp plugin install woocommerce --version=10.3.0 --activate
 docker compose -f tests/compose.yml run --rm cli wp plugin activate y2kwebs-lafise
+docker compose -f tests/compose.yml run --rm cli wp language core install es_ES es_CR es_MX es_AR en_GB
 
 docker compose -f tests/compose.yml run --rm cli wp rewrite structure '/%postname%/'
 docker compose -f tests/compose.yml run --rm cli wp wc hpos sync
@@ -33,6 +35,8 @@ docker compose -f tests/compose.yml run --rm cli wp eval-file wp-content/plugins
 docker compose -f tests/compose.yml run --rm cli wp eval-file wp-content/plugins/y2kwebs-lafise/tests/settings.php
 
 docker compose -f tests/compose.yml run --rm cli wp eval-file wp-content/plugins/y2kwebs-lafise/tests/security.php
+
+docker compose -f tests/compose.yml run --rm cli wp eval-file wp-content/plugins/y2kwebs-lafise/tests/languages.php
 docker compose -f tests/compose.yml stop
 ```
 
@@ -51,7 +55,13 @@ El primer comando revisa los archivos que Git incluiría, también antes del pri
 
 GitHub Actions ejecuta las comprobaciones de sintaxis, protocolo, transporte, JWE y empaquetado con PHP 8.2/8.4, Node.js 24 y Python 3.11. Una segunda fase levanta el entorno Docker, instala WooCommerce 10.3.0, ejecuta integración clásica/HPOS y ajustes y verifica la copia extraída del ZIP. La configuración del banco es ficticia; no hay secretos de comercio en CI. La compatibilidad adicional con WooCommerce 11.2.1 está documentada como prueba manual en [validación](validation.md).
 
-La preparación local de 0.2.1 actualiza también las referencias del workflow al nuevo paquete, pero no ejecuta CI remoto. Las regresiones nuevas cubren firma por código sin alternativas, rechazo de contratos inseguros antes de HTTP, desafío directo con confirmación única y rechazo `59` con bloqueo de resultados contradictorios. Los datos bancarios son sintéticos; no copies las respuestas originales a los fixtures.
+Las regresiones bancarias cubren firma por código sin alternativas, rechazo de contratos inseguros antes de HTTP, desafío directo con confirmación única y rechazo `59` con bloqueo de resultados contradictorios. Los datos bancarios son sintéticos; no copies las respuestas originales a los fixtures.
+
+## Catálogos y regresiones de idiomas
+
+Edita las cadenas fuente inglesas y `languages/y2kwebs-lafise-es_ES.po`; ejecuta `python scripts/build_translations.py` para regenerar POT y MO. El constructor rechaza traducciones vacías, fuzzy, obsoletas o ausentes y genera artefactos reproducibles. Si se añaden plurales o contextos, hay que ampliar explícitamente el constructor. El catálogo actual coincide con las 70 cadenas extraídas por `wp i18n make-pot`, incluidos los metadatos.
+
+`tests/languages.php` comprueba es_CR, es_ES, es_MX, es_AR, en_US y en_GB sin paquetes del plugin descargados; crea temporalmente un catálogo regional parcial, prueba su prioridad y restaura el entorno. Cubre checkout clásico/bloques, títulos personalizados, mensajes JavaScript, cambio y restauración de locale, administrador inglés con tienda española y AJAX autenticado con ambos idiomas distintos. El fixture web falla ante una carga temprana de traducciones del plugin. `tests/verify-i18n.test.mjs` recorre todos los mensajes de 3DS usando textos entregados por PHP. El JSON de 3DS viaja escapado en un atributo de datos para conservar la CSP sin JavaScript inline.
 
 ## Plugin Check y regresiones de seguridad
 

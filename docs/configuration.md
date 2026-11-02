@@ -7,7 +7,13 @@
 5. Guarda y pulsa **Comprobar conexión (sin cobro)**. Esta acción autentica y comprueba la llave pública; no realiza una venta.
 6. Activa el método de pago. En modo **Normal** estará disponible para los compradores, incluidos invitados.
 
-No se solicitan certificados, códigos de aprobación ni archivos de configuración privados para usar el plugin. Cada comercio utiliza sus propias credenciales y acuerda con LAFISE las condiciones de su servicio. La versión 0.2.1 es preliminar; consulta la [validación](validation.md) antes de realizar pruebas bancarias.
+No se solicitan certificados, códigos de aprobación ni archivos de configuración privados para usar el plugin. Cada comercio utiliza sus propias credenciales y acuerda con LAFISE las condiciones de su servicio. La versión 0.2.2 es preliminar; consulta la [validación](validation.md) antes de realizar pruebas bancarias.
+
+## Idiomas
+
+Desde 0.2.2, las cadenas fuente están en inglés y el paquete incluye un catálogo completo de español. Para cualquier locale español (`es_ES`, `es_CR`, `es_MX`, etc.), se utiliza primero la traducción regional disponible y después el español incluido para las cadenas que falten. En otros idiomas se conserva la traducción que cargue WordPress o el inglés fuente. Esto afecta únicamente al dominio `y2kwebs-lafise` y respeta los cambios de locale.
+
+Los ajustes y acciones administrativas siguen el idioma del usuario. El checkout, AJAX de preparación y la verificación bancaria siguen el idioma de la tienda. Los títulos ya guardados por el comercio se conservan literalmente. Username, Password, TerminalID, MerchantID y API KEY mantienen sus etiquetas bancarias. La ficha del directorio se traduce mediante Translate WordPress y requiere aprobación comunitaria aparte; un aviso de traducción pendiente en esa ficha no significa que falte español en el plugin instalado.
 
 Si WooCommerce indica que no hay métodos de pago, comprueba que la pasarela esté activada, que las credenciales estén completas, que la moneda del terminal coincida con la tienda y que WordPress detecte HTTPS. En modo Pruebas, accede con una cuenta autorizada. Si `Typerequest` no se ha guardado, el plugin utiliza `Production`; un valor guardado explícitamente vacío sigue siendo inválido.
 

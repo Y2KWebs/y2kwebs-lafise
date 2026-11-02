@@ -15,7 +15,7 @@ SCREENSHOTS = {
 
 def prepare(root=ROOT):
     root = Path(root).resolve()
-    out = root / "dist" / "wordpress-org"
+    out = root / "dist" / "wordpress-org" / VERSION
     # Refuse unexpected files rather than leaving stale files in a publication candidate.
     expected = {"manifest.json"}
     for prefix in ("svn/trunk/", f"svn/tags/{VERSION}/"):

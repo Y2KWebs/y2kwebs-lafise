@@ -5,6 +5,10 @@ from pathlib import Path
 import tempfile
 import unittest
 import zipfile
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+from build_translations import compile_mo
 
 SPEC = importlib.util.spec_from_file_location("public_package", Path(__file__).resolve().parents[1] / "scripts/package.py")
 builder = importlib.util.module_from_spec(SPEC)
@@ -19,11 +23,13 @@ class PackageTests(unittest.TestCase):
         for name in builder.FILES:
             path = self.root / name
             path.parent.mkdir(parents=True, exist_ok=True)
-            if name in builder.IMAGES:
+            if name in builder.MO_FILES:
+                path.write_bytes(compile_mo({"": "Content-Type: text/plain; charset=UTF-8\n", "Card number": "Número de tarjeta"}))
+            elif name in builder.IMAGES:
                 path.write_bytes(b"\xff\xd8\xffSYNTHETIC-IMAGE\xff\xd9")
             else:
                 path.write_text("Synthetic public file\n", encoding="utf-8")
-        (self.root / "y2kwebs-lafise.php").write_text("<?php\n/**\n * Version: 0.2.1\n */\n", encoding="utf-8")
+        (self.root / "y2kwebs-lafise.php").write_text("<?php\n/**\n * Version: " + builder.VERSION + "\n */\n", encoding="utf-8")
 
     def test_allowlist_checksum_and_reproducibility(self):
         for name in ("docs/internal-notes.md", "src/debug.log", "config/credentials.local.php", ".runtime/access.txt", "tests/fixture.php"):
@@ -63,6 +69,11 @@ class PackageTests(unittest.TestCase):
     def test_version_mismatch_rejected(self):
         (self.root / "y2kwebs-lafise.php").write_text("<?php\n * Version: 9.9.9\n", encoding="utf-8")
         with self.assertRaisesRegex(ValueError, "version differ"):
+            builder.package(self.root)
+
+    def test_invalid_translation_rejected(self):
+        (self.root / "languages/y2kwebs-lafise-es_ES.mo").write_bytes(b"not-a-catalogue")
+        with self.assertRaisesRegex(ValueError, "Invalid translation"):
             builder.package(self.root)
 
 

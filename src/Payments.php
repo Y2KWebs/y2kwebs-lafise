@@ -170,17 +170,17 @@ final class Payments
                 throw new \DomainException('Order changed after payment.');
             }
             $order->payment_complete($a['data']['receipt']['bank_reference']);
-            $order->add_order_note(__('Pago LAFISE confirmado.', 'y2kwebs-lafise'));
+            $order->add_order_note(__('LAFISE payment confirmed.', 'y2kwebs-lafise'));
         } elseif ($a['state'] === 'unknown' && !$order->is_paid() && !$order->get_meta('_y2k_lafise_review')) {
             $order->update_meta_data('_y2k_lafise_review', true);
             $order->update_status('on-hold');
-            $order->add_order_note(__('LAFISE: resultado pendiente de comprobación. No repetir el cobro.', 'y2kwebs-lafise'));
+            $order->add_order_note(__('LAFISE: result pending review. Do not repeat the charge.', 'y2kwebs-lafise'));
             $order->save();
         } elseif ($a['state'] === 'declined' && !$order->is_paid()) {
             $reason = $a['data']['reason'] ?? '';
             $order->update_status('failed', in_array($reason, ['authentication_expired','authentication_setup_failed','payment_not_sent'], true)
-                ? __('LAFISE: no se completó la autenticación; puedes volver a intentar el pago.', 'y2kwebs-lafise')
-                : __('LAFISE: pago rechazado.', 'y2kwebs-lafise'));
+                ? __('LAFISE: authentication was not completed; you can try the payment again.', 'y2kwebs-lafise')
+                : __('LAFISE: payment declined.', 'y2kwebs-lafise'));
         }
     }
 

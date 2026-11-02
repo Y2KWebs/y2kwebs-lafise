@@ -3,6 +3,7 @@
     const root = document.querySelector('[data-status-url]');
     const frame = root.querySelector('iframe');
     const message = root.querySelector('[data-message]');
+    const messages = JSON.parse(root.dataset.messages);
     let lastAction = '';
     let timer;
     let stopped = false;
@@ -23,17 +24,17 @@
             if (['unknown', 'declined'].includes(result.state) || Date.now() - started > 1800000) {
                 stopped = true; frame.hidden = true;
                 message.textContent = result.state === 'declined' ? (['authentication_expired','authentication_setup_failed','payment_not_sent'].includes(result.reason)
-                    ? 'No se completó la autenticación. Puedes volver a intentar el pago.' : 'El banco ha rechazado el pago.')
-                    : 'El pago está pendiente de comprobación. Contacta con la tienda antes de volver a pagar.';
+                    ? messages.authenticationIncomplete : messages.declined)
+                    : messages.pending;
                 if (result.retry) {
                     const retry = new URL(result.retry, location.href);
                     if (retry.origin === location.origin) {
-                        const link = document.createElement('a'); link.href = retry.href; link.textContent = 'Volver a intentar el pago'; root.append(link);
+                        const link = document.createElement('a'); link.href = retry.href; link.textContent = messages.retry; root.append(link);
                     }
                 }
                 return;
             }
-            message.textContent = result.state === 'challenge' ? 'Completa la verificación con tu banco.' : 'Estamos verificando el pago…';
+            message.textContent = result.state === 'challenge' ? messages.challenge : messages.checking;
             if (result.action) {
                 const key = JSON.stringify(result.action);
                 if (key !== lastAction) {
@@ -51,7 +52,7 @@
                 }
             } else { frame.hidden = true; }
         } catch (_) {
-            message.textContent = 'No podemos consultar el estado. No repitas el pago; estamos comprobándolo.';
+            message.textContent = messages.unavailable;
             if (Date.now() - started > 1800000) stopped = true;
         } finally {
             busy = false;

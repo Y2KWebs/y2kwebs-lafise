@@ -2,7 +2,7 @@
     'use strict';
     const { createElement: el, useEffect, useRef } = window.wp.element;
     const data = window.wc.wcSettings.getSetting('y2kwebs_lafise_data', {});
-    const title = window.wp.htmlEntities.decodeEntities(data.title || 'Tarjeta — LAFISE');
+    const title = window.wp.htmlEntities.decodeEntities(data.title || window.y2kLafise.title);
     function Fields(props) {
         const root = useRef(null);
         useEffect(() => props.eventRegistration.onPaymentSetup(async () => {

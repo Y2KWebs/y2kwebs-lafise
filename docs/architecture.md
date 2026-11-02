@@ -1,6 +1,6 @@
 # Arquitectura y flujo de pago
 
-El plugin conecta directamente la tienda con la API REST de LAFISE Costa Rica. Y2KWebs no opera un intermediario de pagos. La versión 0.2.1 es preliminar; consulta la [validación](validation.md).
+El plugin conecta directamente la tienda con la API REST de LAFISE Costa Rica. Y2KWebs no opera un intermediario de pagos. La versión 0.2.2 es preliminar; consulta la [validación](validation.md).
 
 ## Componentes
 

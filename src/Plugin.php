@@ -6,7 +6,7 @@ final class Plugin
     public static function activate(): void
     {
         if (PHP_VERSION_ID < 80200 || !extension_loaded('openssl') || !extension_loaded('dom') || !class_exists('WooCommerce')) {
-            wp_die(esc_html__('Requiere WooCommerce, PHP 8.2+, OpenSSL y DOM.', 'y2kwebs-lafise'));
+            wp_die(esc_html__('Requires WooCommerce, PHP 8.2+, OpenSSL and DOM.', 'y2kwebs-lafise'));
         }
         Store::install();
         self::routes();
@@ -48,7 +48,7 @@ final class Plugin
         add_action('admin_post_y2k_lafise_diagnose', [Routes::class, 'diagnose']);
         add_filter('woocommerce_order_actions', static function ($actions, $order) {
             if ($order && $order->get_payment_method() === 'y2kwebs_lafise') {
-                $actions['y2k_lafise_check'] = __('Consultar estado en LAFISE (sin nuevo cobro)', 'y2kwebs-lafise');
+                $actions['y2k_lafise_check'] = __('Check status in LAFISE (no new charge)', 'y2kwebs-lafise');
             }
             return $actions;
         }, 10, 2);
@@ -59,7 +59,7 @@ final class Plugin
             try {
                 (new Payments())->reconcile((string) $order->get_meta('_y2k_lafise_reference'));
             } catch (\Throwable) {
-                $order->add_order_note(__('LAFISE: no se pudo consultar. Revisar manualmente; no repetir el cobro.', 'y2kwebs-lafise'));
+                $order->add_order_note(__('LAFISE: status could not be checked. Review manually; do not repeat the charge.', 'y2kwebs-lafise'));
             }
         });
     }
@@ -85,6 +85,8 @@ final class Plugin
         wp_enqueue_script('y2k-lafise-checkout', plugins_url('assets/checkout.js', Y2K_LAFISE_FILE), ['jquery'], Y2K_LAFISE_VERSION, true);
         wp_localize_script('y2k-lafise-checkout', 'y2kLafise', ['ajax' => admin_url('admin-ajax.php'),
             'csrf' => Payments::csrf(), 'jwe' => plugins_url('assets/jwe.mjs', Y2K_LAFISE_FILE),
-            'error' => __('No se pudo preparar el pago. Comprueba los datos e inténtalo nuevamente.', 'y2kwebs-lafise')]);
+            'title' => __('Card — LAFISE', 'y2kwebs-lafise'),
+            'invalidCard' => __('Check the card number, name, MM/YY expiry date and security code.', 'y2kwebs-lafise'),
+            'error' => __('The payment could not be prepared. Check the details and try again.', 'y2kwebs-lafise')]);
     }
 }

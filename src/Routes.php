@@ -32,14 +32,14 @@ final class Routes
             $csrf = self::post('csrf');
             wp_send_json_success((new Payments())->key($csrf));
         } catch (\Throwable) {
-            wp_send_json_error(['message' => __('No se pudo preparar el pago.', 'y2kwebs-lafise')], 400);
+            wp_send_json_error(['message' => __('The payment could not be prepared.', 'y2kwebs-lafise')], 400);
         }
     }
 
     public static function diagnose(): void
     {
         if (!current_user_can('manage_woocommerce')) {
-            wp_die(esc_html__('Acceso denegado.', 'y2kwebs-lafise'), '', ['response' => 403]);
+            wp_die(esc_html__('Access denied.', 'y2kwebs-lafise'), '', ['response' => 403]);
         }
         check_admin_referer('y2k_lafise_diagnose');
         $ok = false;
@@ -47,8 +47,8 @@ final class Routes
             (new Bank(new Config()))->authenticate();
             $ok = true;
         } catch (\Throwable) {}
-        wp_die(esc_html($ok ? __('Conexión y llave pública válidas. No se ha realizado ningún cobro.', 'y2kwebs-lafise')
-            : __('No se pudo validar la conexión. Revisa la configuración privada.', 'y2kwebs-lafise')), 'LAFISE', ['response' => $ok ? 200 : 400, 'back_link' => true]);
+        wp_die(esc_html($ok ? __('Connection and public key are valid. No charge has been made.', 'y2kwebs-lafise')
+            : __('The connection could not be validated. Check your merchant settings.', 'y2kwebs-lafise')), 'LAFISE', ['response' => $ok ? 200 : 400, 'back_link' => true]);
     }
 
     public static function handle(): void
@@ -79,24 +79,25 @@ final class Routes
                     $input[$name] = self::post($name);
                 }
                 $payments->callback($reference, $token, $input);
-                self::page(__('Verificación recibida. Puedes regresar al pago.', 'y2kwebs-lafise'), 'callback.js');
+                self::page(__('Verification received. You can return to the payment.', 'y2kwebs-lafise'), 'callback.js');
             }
             if (self::method() !== 'GET') { throw new \DomainException('Invalid request.'); }
             if ($action === 'status') {
                 wp_send_json($payments->status($reference, $token));
             }
             if ($action === 'verify') {
-                $body = '<main class="y2k-verify" data-status-url="' . esc_url(Payments::url('status', $a)) . '">'
-                    . '<h1>' . esc_html__('Confirmación del pago', 'y2kwebs-lafise') . '</h1>'
-                    . '<p role="status" data-message>' . esc_html__('Consultando el resultado…', 'y2kwebs-lafise') . '</p>'
-                    . '<iframe hidden name="y2k-bank" title="' . esc_attr__('Verificación de tu banco', 'y2kwebs-lafise') . '" sandbox="allow-forms allow-scripts allow-same-origin allow-top-navigation-by-user-activation"></iframe>'
-                    . '<p>' . esc_html__('No cierres esta página mientras verificas el pago. Si el resultado queda pendiente, contacta con la tienda antes de pagar de nuevo.', 'y2kwebs-lafise') . '</p></main>';
+                $body = '<main class="y2k-verify" data-status-url="' . esc_url(Payments::url('status', $a)) . '" data-messages="'
+                    . esc_attr(wp_json_encode(Languages::verification())) . '">'
+                    . '<h1>' . esc_html__('Payment confirmation', 'y2kwebs-lafise') . '</h1>'
+                    . '<p role="status" data-message>' . esc_html__('Checking the result…', 'y2kwebs-lafise') . '</p>'
+                    . '<iframe hidden name="y2k-bank" title="' . esc_attr__('Bank verification', 'y2kwebs-lafise') . '" sandbox="allow-forms allow-scripts allow-same-origin allow-top-navigation-by-user-activation"></iframe>'
+                    . '<p>' . esc_html__('Do not close this page while verifying the payment. If the result remains pending, contact the store before paying again.', 'y2kwebs-lafise') . '</p></main>';
                 self::page($body, 'verify.js', true);
             }
             throw new \DomainException('Invalid route.');
         } catch (\Throwable) {
             status_header(400);
-            self::page(__('No se pudo completar esta consulta. Contacta con la tienda antes de repetir el pago.', 'y2kwebs-lafise'));
+            self::page(__('This status check could not be completed. Contact the store before repeating the payment.', 'y2kwebs-lafise'));
         }
     }
 
@@ -108,11 +109,11 @@ final class Routes
         }
         header('Content-Type: text/html; charset=UTF-8');
         echo '<!doctype html><html lang="' . esc_attr(get_bloginfo('language')) . '"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
-            . '<title>' . esc_html__('Pago LAFISE', 'y2kwebs-lafise') . '</title>';
+            . '<title>' . esc_html__('LAFISE payment', 'y2kwebs-lafise') . '</title>';
         wp_print_styles(['y2k-lafise-page']);
         echo '</head><body>';
         if ($html) {
-            echo wp_kses($body, ['main' => ['class' => true, 'data-status-url' => true], 'h1' => [],
+            echo wp_kses($body, ['main' => ['class' => true, 'data-status-url' => true, 'data-messages' => true], 'h1' => [],
                 'p' => ['role' => true, 'data-message' => true],
                 'iframe' => ['hidden' => true, 'name' => true, 'title' => true, 'sandbox' => true]]);
         } else {

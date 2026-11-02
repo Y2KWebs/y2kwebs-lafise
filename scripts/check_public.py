@@ -4,7 +4,7 @@ import re
 import subprocess
 from urllib.parse import unquote, urlsplit
 
-from package import ROOT, SECRET_PATTERN, IMAGES
+from package import ROOT, SECRET_PATTERN, IMAGES, MO_FILES, translation_text
 
 # Exact, visually reviewed directory graphics; these never enter the installable ZIP.
 DIRECTORY_ARTWORK = {
@@ -39,7 +39,13 @@ def check(root=ROOT):
         except UnicodeDecodeError:
             # Admit only the individually reviewed screenshots and directory artwork.
             data = path.read_bytes()
-            if name in DIRECTORY_ARTWORK:
+            if name in MO_FILES:
+                try:
+                    content = translation_text(data)
+                except ValueError:
+                    errors.append(f"{name}: invalid translation catalogue")
+                    continue
+            elif name in DIRECTORY_ARTWORK:
                 width, height, limit = DIRECTORY_ARTWORK[name]
                 if (not data.startswith(b"\x89PNG\r\n\x1a\n") or data[12:16] != b"IHDR"
                         or int.from_bytes(data[16:20], "big") != width
@@ -49,7 +55,8 @@ def check(root=ROOT):
             elif name not in IMAGES or not data.startswith(b"\xff\xd8\xff") or not data.endswith(b"\xff\xd9") or len(data) > 2_000_000:
                 errors.append(f"{name}: binary file requires explicit manual review")
                 continue
-            content = data.decode("utf-8", errors="ignore")
+            if name not in MO_FILES:
+                content = data.decode("utf-8", errors="ignore")
         for number, line in enumerate(content.splitlines(), 1):
             # This existing negative test deliberately rejects URL userinfo.
             reviewed = line
