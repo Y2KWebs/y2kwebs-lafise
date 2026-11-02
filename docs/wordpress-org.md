@@ -70,6 +70,12 @@ La autenticación SVN usa el usuario `y2kwebs` y su contraseña SVN específica.
 
 La integración original utiliza la política de privacidad pública de LAFISE Costa Rica. Las condiciones y tarifas del servicio de pago corresponden al contrato de cada comercio; no se han sustituido por términos generales de otro servicio bancario.
 
+## Traducciones oficiales
+
+0.2.2 mantiene el readme en inglés y añade inglés fuente y español incluido al software. Los catálogos del directorio se presentan por separado en los proyectos Stable, Development, Stable Readme y Development Readme para es_ES y es_CR. La cuenta `y2kwebs` puede importar propuestas con estado Waiting; ese permiso no permite aprobarlas.
+
+El español incluido funciona antes de la validación. El aviso «Este plugin aún no ha sido traducido…» depende de los paquetes oficiales de WordPress.org, no del MO incluido en el ZIP. Solo se dará por completada esa parte cuando se aprueben las traducciones, se generen los paquetes regionales y se comprueben las fichas localizadas. La solicitud de revisión seguirá el [procedimiento de Polyglots](https://make.wordpress.org/polyglots/handbook/plugin-theme-authors-guide/pte-request/); no se atribuye aprobación a una importación en Waiting.
+
 ## Referencias oficiales
 
 - [Proceso de envío y requisitos](https://developer.wordpress.org/plugins/wordpress-org/plugin-developer-faq/)

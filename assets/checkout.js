@@ -10,7 +10,7 @@
         const now = new Date();
         if (!/^[0-9]{12,19}$/.test(number) || !name || !expiry || !/^[0-9]{3,4}$/.test(cvv)
             || new Date(2000 + Number(expiry[2]), Number(expiry[1]), 1) <= now) {
-            throw new Error('Comprueba el número de tarjeta, nombre, caducidad MM/AA y código de seguridad.');
+            throw new Error(y2kLafise.invalidCard);
         }
         const response = await fetch(y2kLafise.ajax, { method: 'POST', credentials: 'same-origin', cache: 'no-store',
             body: new URLSearchParams({ action: 'y2k_lafise_key', csrf: y2kLafise.csrf }) });

@@ -1,0 +1,285 @@
+# Copyright (C) 2026 Y2KWebs
+# Distributed under GPL-2.0-or-later.
+msgid ""
+msgstr "Project-Id-Version: Y2KWebs Gateway for LAFISE\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\nX-Domain: y2kwebs-lafise\n"
+
+#: src/Gateway.php:10
+msgid "Accept card payments through LAFISE Costa Rica. Enter your merchant credentials and check the connection."
+msgstr ""
+
+#: src/Routes.php:42
+msgid "Access denied."
+msgstr ""
+
+#: src/Gateway.php:30
+msgid "Applies only in Testing mode, in the terminal currency. This is not a sandbox."
+msgstr ""
+
+#: src/Settings.php:45
+msgid "Attempt not found."
+msgstr ""
+
+#: src/Languages.php:54
+msgid "Authentication was not completed. You can try the payment again."
+msgstr ""
+
+#: src/Routes.php:93
+msgid "Bank verification"
+msgstr ""
+
+#: src/Gateway.php:97
+msgid "Card number"
+msgstr ""
+
+#: y2kwebs-lafise.php
+msgid "Card payments with LAFISE Costa Rica for WooCommerce. Configure your merchant credentials in the administrator."
+msgstr ""
+
+#: src/Blocks.php:24 src/Gateway.php:15 src/Gateway.php:26 src/Plugin.php:88
+msgid "Card — LAFISE"
+msgstr ""
+
+#: src/Gateway.php:53
+msgid "Check connection (no charge)"
+msgstr ""
+
+#: src/Plugin.php:51
+msgid "Check status in LAFISE (no new charge)"
+msgstr ""
+
+#: src/Plugin.php:89
+msgid "Check the card number, name, MM/YY expiry date and security code."
+msgstr ""
+
+#: src/Routes.php:92
+msgid "Checking the result…"
+msgstr ""
+
+#: src/Languages.php:58
+msgid "Complete verification with your bank."
+msgstr ""
+
+#: src/Routes.php:50
+msgid "Connection and public key are valid. No charge has been made."
+msgstr ""
+
+#: src/Gateway.php:39
+msgid "Copy the API KEY value from the LAFISE email. It is used to sign requests. Leave blank to keep the saved key."
+msgstr ""
+
+#: src/Gateway.php:43
+msgid "Delete Password and API KEY when saving. This disables the payment method."
+msgstr ""
+
+#: src/Gateway.php:42
+msgid "Delete saved credentials"
+msgstr ""
+
+#: src/Routes.php:94
+msgid "Do not close this page while verifying the payment. If the result remains pending, contact the store before paying again."
+msgstr ""
+
+#: src/Gateway.php:24
+msgid "Enable"
+msgstr ""
+
+#: src/Gateway.php:25
+msgid "Enable LAFISE payments"
+msgstr ""
+
+#: src/Gateway.php:99
+msgid "Expiry (MM/YY)"
+msgstr ""
+
+#: src/Gateway.php:52
+msgid "Installation and support by Y2KWebs"
+msgstr ""
+
+#: src/Refunds.php:18
+msgid "Invalid amount or order."
+msgstr ""
+
+#: src/Settings.php:66
+msgid "Invalid choice."
+msgstr ""
+
+#: src/Gateway.php:71
+msgid "Invalid credential."
+msgstr ""
+
+#: src/Settings.php:63
+msgid "Invalid setting."
+msgstr ""
+
+#: src/Settings.php:69
+msgid "Invalid switch."
+msgstr ""
+
+#: src/Settings.php:58
+msgid "JSON object required."
+msgstr ""
+
+#: src/Gateway.php:50
+msgid "Keys are stored encrypted. You can replace them using these fields; leaving them blank keeps the saved values."
+msgstr ""
+
+#: src/Routes.php:112
+msgid "LAFISE payment"
+msgstr ""
+
+#: src/Payments.php:173
+msgid "LAFISE payment confirmed."
+msgstr ""
+
+#: src/Payments.php:182
+msgid "LAFISE: authentication was not completed; you can try the payment again."
+msgstr ""
+
+#: src/Payments.php:183
+msgid "LAFISE: payment declined."
+msgstr ""
+
+#: src/Payments.php:177
+msgid "LAFISE: result pending review. Do not repeat the charge."
+msgstr ""
+
+#: src/Plugin.php:62
+msgid "LAFISE: status could not be checked. Review manually; do not repeat the charge."
+msgstr ""
+
+#: src/Gateway.php:35
+msgid "Leave blank to keep the saved password."
+msgstr ""
+
+#: src/Gateway.php:29
+msgid "Maximum test payment amount"
+msgstr ""
+
+#: src/Gateway.php:27
+msgid "Mode"
+msgstr ""
+
+#: src/Gateway.php:98
+msgid "Name on card"
+msgstr ""
+
+#: src/Gateway.php:28
+msgid "Normal: available to buyers"
+msgstr ""
+
+#: src/Gateway.php:63
+msgid "Not configured"
+msgstr ""
+
+#: src/Gateway.php:16
+msgid "Pay by card. Your bank may request additional verification."
+msgstr ""
+
+#: src/Routes.php:91
+msgid "Payment confirmation"
+msgstr ""
+
+#: src/Plugin.php:9
+msgid "Requires WooCommerce, PHP 8.2+, OpenSSL and DOM."
+msgstr ""
+
+#: src/Gateway.php:63
+msgid "Saved — leave blank to keep"
+msgstr ""
+
+#: src/Gateway.php:100
+msgid "Security code"
+msgstr ""
+
+#: src/Gateway.php:31
+msgid "Terminal currency"
+msgstr ""
+
+#: src/Gateway.php:28
+msgid "Testing: administrators only (real charges)"
+msgstr ""
+
+#: src/Languages.php:55
+msgid "The bank has declined the payment."
+msgstr ""
+
+#: src/Routes.php:51
+msgid "The connection could not be validated. Check your merchant settings."
+msgstr ""
+
+#: src/Gateway.php:125
+msgid "The payment could not be completed. Check the order status before trying again."
+msgstr ""
+
+#: src/Routes.php:35
+msgid "The payment could not be prepared."
+msgstr ""
+
+#: src/Plugin.php:90
+msgid "The payment could not be prepared. Check the details and try again."
+msgstr ""
+
+#: src/Languages.php:56
+msgid "The payment is pending review. Contact the store before paying again."
+msgstr ""
+
+#: src/Refunds.php:23
+msgid "The refund has not been sent. Check whether another operation is in progress."
+msgstr ""
+
+#: src/Routes.php:100
+msgid "This status check could not be completed. Contact the store before repeating the payment."
+msgstr ""
+
+#: src/Gateway.php:51
+msgid "This version does not yet send bank refunds from WooCommerce. Handle the refund through LAFISE and record it here as a manual refund."
+msgstr ""
+
+#: src/Refunds.php:20
+msgid "This version does not yet support automatic bank refunds. Refund the payment through LAFISE and record it as a manual refund in WooCommerce."
+msgstr ""
+
+#: src/Gateway.php:26
+msgid "Title"
+msgstr ""
+
+#: src/Languages.php:57
+msgid "Try the payment again"
+msgstr ""
+
+#: src/Gateway.php:41
+msgid "Usually Production. Change this value only if your bank configuration uses another value."
+msgstr ""
+
+#: src/Routes.php:82
+msgid "Verification received. You can return to the payment."
+msgstr ""
+
+#: src/Languages.php:59
+msgid "We are verifying the payment…"
+msgstr ""
+
+#: src/Languages.php:60
+msgid "We cannot check the status. Do not repeat the payment; we are checking it."
+msgstr ""
+
+#: y2kwebs-lafise.php
+msgid "Y2KWebs"
+msgstr ""
+
+#: y2kwebs-lafise.php
+msgid "Y2KWebs Gateway for LAFISE"
+msgstr ""
+
+#: src/Refunds.php:10
+msgid "You do not have permission to refund orders."
+msgstr ""
+
+#: y2kwebs-lafise.php
+msgid "https://github.com/Y2KWebs/y2kwebs-lafise"
+msgstr ""
+
+#: y2kwebs-lafise.php
+msgid "https://y2kwebs.com"
+msgstr ""
+

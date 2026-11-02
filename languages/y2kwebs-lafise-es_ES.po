@@ -1,0 +1,217 @@
+# Spanish translations distributed with Y2KWebs Gateway for LAFISE.
+# Copyright (C) 2026 Y2KWebs
+# This file is distributed under the GPL-2.0-or-later license.
+msgid ""
+msgstr "Project-Id-Version: Y2KWebs Gateway for LAFISE 0.2.2\nReport-Msgid-Bugs-To: https://github.com/Y2KWebs/y2kwebs-lafise/issues\nLanguage: es_ES\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\nPlural-Forms: nplurals=2; plural=(n != 1);\nX-Domain: y2kwebs-lafise\n"
+
+msgid "Accept card payments through LAFISE Costa Rica. Enter your merchant credentials and check the connection."
+msgstr "Acepta pagos con tarjeta mediante LAFISE Costa Rica. Introduce las credenciales de tu comercio y comprueba la conexión."
+
+msgid "Access denied."
+msgstr "Acceso denegado."
+
+msgid "Applies only in Testing mode, in the terminal currency. This is not a sandbox."
+msgstr "Solo se aplica en modo Pruebas, en la moneda del terminal. No es un sandbox."
+
+msgid "Attempt not found."
+msgstr "Intento no encontrado."
+
+msgid "Authentication was not completed. You can try the payment again."
+msgstr "No se completó la autenticación. Puedes volver a intentar el pago."
+
+msgid "Bank verification"
+msgstr "Verificación de tu banco"
+
+msgid "Card number"
+msgstr "Número de tarjeta"
+
+msgid "Card payments with LAFISE Costa Rica for WooCommerce. Configure your merchant credentials in the administrator."
+msgstr "Pagos con tarjeta LAFISE Costa Rica para WooCommerce. Configura las credenciales de tu comercio desde el administrador."
+
+msgid "Card — LAFISE"
+msgstr "Tarjeta — LAFISE"
+
+msgid "Check connection (no charge)"
+msgstr "Comprobar conexión (sin cobro)"
+
+msgid "Check status in LAFISE (no new charge)"
+msgstr "Consultar estado en LAFISE (sin nuevo cobro)"
+
+msgid "Check the card number, name, MM/YY expiry date and security code."
+msgstr "Comprueba el número de tarjeta, nombre, caducidad MM/AA y código de seguridad."
+
+msgid "Checking the result…"
+msgstr "Consultando el resultado…"
+
+msgid "Complete verification with your bank."
+msgstr "Completa la verificación con tu banco."
+
+msgid "Connection and public key are valid. No charge has been made."
+msgstr "Conexión y llave pública válidas. No se ha realizado ningún cobro."
+
+msgid "Copy the API KEY value from the LAFISE email. It is used to sign requests. Leave blank to keep the saved key."
+msgstr "Copia el valor API KEY del correo de LAFISE. Se utiliza para firmar las solicitudes. Deja vacío para conservar la llave guardada."
+
+msgid "Delete Password and API KEY when saving. This disables the payment method."
+msgstr "Borrar Password y API KEY al guardar. Desactiva el método de pago."
+
+msgid "Delete saved credentials"
+msgstr "Eliminar credenciales guardadas"
+
+msgid "Do not close this page while verifying the payment. If the result remains pending, contact the store before paying again."
+msgstr "No cierres esta página mientras verificas el pago. Si el resultado queda pendiente, contacta con la tienda antes de pagar de nuevo."
+
+msgid "Enable"
+msgstr "Activar"
+
+msgid "Enable LAFISE payments"
+msgstr "Activar pagos con LAFISE"
+
+msgid "Expiry (MM/YY)"
+msgstr "Caducidad (MM/AA)"
+
+msgid "Installation and support by Y2KWebs"
+msgstr "Instalación y soporte por Y2KWebs"
+
+msgid "Invalid amount or order."
+msgstr "Importe o pedido no válido."
+
+msgid "Invalid choice."
+msgstr "Opción no válida."
+
+msgid "Invalid credential."
+msgstr "Credencial no válida."
+
+msgid "Invalid setting."
+msgstr "Ajuste no válido."
+
+msgid "Invalid switch."
+msgstr "Valor de activación no válido."
+
+msgid "JSON object required."
+msgstr "Se requiere un objeto JSON."
+
+msgid "Keys are stored encrypted. You can replace them using these fields; leaving them blank keeps the saved values."
+msgstr "Las claves se guardan cifradas. Puedes sustituirlas desde estos campos; dejarlos vacíos conserva los valores guardados."
+
+msgid "LAFISE payment"
+msgstr "Pago LAFISE"
+
+msgid "LAFISE payment confirmed."
+msgstr "Pago LAFISE confirmado."
+
+msgid "LAFISE: authentication was not completed; you can try the payment again."
+msgstr "LAFISE: no se completó la autenticación; puedes volver a intentar el pago."
+
+msgid "LAFISE: payment declined."
+msgstr "LAFISE: pago rechazado."
+
+msgid "LAFISE: result pending review. Do not repeat the charge."
+msgstr "LAFISE: resultado pendiente de comprobación. No repetir el cobro."
+
+msgid "LAFISE: status could not be checked. Review manually; do not repeat the charge."
+msgstr "LAFISE: no se pudo consultar. Revisar manualmente; no repetir el cobro."
+
+msgid "Leave blank to keep the saved password."
+msgstr "Deja vacío para conservar la contraseña guardada."
+
+msgid "Maximum test payment amount"
+msgstr "Máximo por pago de prueba"
+
+msgid "Mode"
+msgstr "Modo"
+
+msgid "Name on card"
+msgstr "Nombre en la tarjeta"
+
+msgid "Normal: available to buyers"
+msgstr "Normal: disponible para compradores"
+
+msgid "Not configured"
+msgstr "Sin configurar"
+
+msgid "Pay by card. Your bank may request additional verification."
+msgstr "Paga con tarjeta. Tu banco puede solicitar una verificación adicional."
+
+msgid "Payment confirmation"
+msgstr "Confirmación del pago"
+
+msgid "Requires WooCommerce, PHP 8.2+, OpenSSL and DOM."
+msgstr "Requiere WooCommerce, PHP 8.2+, OpenSSL y DOM."
+
+msgid "Saved — leave blank to keep"
+msgstr "Guardada — deja vacío para conservar"
+
+msgid "Security code"
+msgstr "Código de seguridad"
+
+msgid "Terminal currency"
+msgstr "Moneda del terminal"
+
+msgid "Testing: administrators only (real charges)"
+msgstr "Pruebas: solo administradores (cobros reales)"
+
+msgid "The bank has declined the payment."
+msgstr "El banco ha rechazado el pago."
+
+msgid "The connection could not be validated. Check your merchant settings."
+msgstr "No se pudo validar la conexión. Revisa la configuración privada."
+
+msgid "The payment could not be completed. Check the order status before trying again."
+msgstr "No se pudo completar el pago. Revisa el estado del pedido antes de volver a intentarlo."
+
+msgid "The payment could not be prepared."
+msgstr "No se pudo preparar el pago."
+
+msgid "The payment could not be prepared. Check the details and try again."
+msgstr "No se pudo preparar el pago. Comprueba los datos e inténtalo nuevamente."
+
+msgid "The payment is pending review. Contact the store before paying again."
+msgstr "El pago está pendiente de comprobación. Contacta con la tienda antes de volver a pagar."
+
+msgid "The refund has not been sent. Check whether another operation is in progress."
+msgstr "No se ha enviado la devolución. Revisa si hay otra operación en curso."
+
+msgid "This status check could not be completed. Contact the store before repeating the payment."
+msgstr "No se pudo completar esta consulta. Contacta con la tienda antes de repetir el pago."
+
+msgid "This version does not yet send bank refunds from WooCommerce. Handle the refund through LAFISE and record it here as a manual refund."
+msgstr "Esta versión todavía no envía devoluciones al banco desde WooCommerce. Gestiona la devolución en LAFISE y regístrala aquí como reembolso manual."
+
+msgid "This version does not yet support automatic bank refunds. Refund the payment through LAFISE and record it as a manual refund in WooCommerce."
+msgstr "Esta versión no implementa todavía devoluciones bancarias automáticas. Realiza la devolución en LAFISE y regístrala como reembolso manual en WooCommerce."
+
+msgid "Title"
+msgstr "Título"
+
+msgid "Try the payment again"
+msgstr "Volver a intentar el pago"
+
+msgid "Usually Production. Change this value only if your bank configuration uses another value."
+msgstr "Normalmente Production. Cambia este valor solo si tu configuración bancaria utiliza otro."
+
+msgid "Verification received. You can return to the payment."
+msgstr "Verificación recibida. Puedes regresar al pago."
+
+msgid "We are verifying the payment…"
+msgstr "Estamos verificando el pago…"
+
+msgid "We cannot check the status. Do not repeat the payment; we are checking it."
+msgstr "No podemos consultar el estado. No repitas el pago; estamos comprobándolo."
+
+msgid "Y2KWebs Gateway for LAFISE"
+msgstr "Y2KWebs Gateway for LAFISE"
+
+msgid "You do not have permission to refund orders."
+msgstr "No tienes permisos para reembolsar pedidos."
+
+
+msgid "https://github.com/Y2KWebs/y2kwebs-lafise"
+msgstr "https://github.com/Y2KWebs/y2kwebs-lafise"
+
+msgid "Y2KWebs"
+msgstr "Y2KWebs"
+
+msgid "https://y2kwebs.com"
+msgstr "https://y2kwebs.com"
+

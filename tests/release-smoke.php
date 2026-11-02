@@ -9,7 +9,12 @@ $assert = static function (bool $ok, string $message) use (&$checks): void {
 };
 $root = dirname(Y2K_LAFISE_FILE);
 $assert(!is_dir($root . '/tests') && !is_dir($root . '/scripts'), 'ZIP mount must exclude development files');
-$assert(Y2K_LAFISE_VERSION === '0.2.1', 'Installed ZIP version');
+$assert(Y2K_LAFISE_VERSION === '0.2.2', 'Installed ZIP version');
+$assert(is_readable($root . '/languages/y2kwebs-lafise.pot') && is_readable($root . '/languages/y2kwebs-lafise-es_ES.po')
+    && is_readable($root . '/languages/y2kwebs-lafise-es_ES.mo'), 'ZIP includes the source and compiled Spanish catalogues');
+switch_to_locale('es_MX');
+$assert(__('Security code', 'y2kwebs-lafise') === 'Código de seguridad', 'Installed ZIP provides Spanish without a downloaded plugin language pack');
+restore_previous_locale();
 $assert(is_plugin_active('y2kwebs-lafise/y2kwebs-lafise.php'), 'Installed ZIP activated');
 $assert(current_user_can('manage_woocommerce'), 'Administrator has settings access');
 $gateway = new Y2KWebs\Lafise\Gateway();

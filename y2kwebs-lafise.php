@@ -2,8 +2,8 @@
 /**
  * Plugin Name: Y2KWebs Gateway for LAFISE
  * Plugin URI: https://github.com/Y2KWebs/y2kwebs-lafise
- * Description: Pagos con tarjeta LAFISE Costa Rica para WooCommerce. Configura las credenciales de tu comercio desde el administrador.
- * Version: 0.2.1
+ * Description: Card payments with LAFISE Costa Rica for WooCommerce. Configure your merchant credentials in the administrator.
+ * Version: 0.2.2
  * Author: Y2KWebs
  * Author URI: https://y2kwebs.com
  * License: GPL-2.0-or-later
@@ -12,9 +12,10 @@
  * Requires Plugins: woocommerce
  * WC requires at least: 10.3
  * Text Domain: y2kwebs-lafise
+ * Domain Path: /languages
  */
 defined('ABSPATH') || exit;
-define('Y2K_LAFISE_VERSION', '0.2.1');
+define('Y2K_LAFISE_VERSION', '0.2.2');
 define('Y2K_LAFISE_FILE', __FILE__);
 spl_autoload_register(static function (string $class): void {
     $prefix = 'Y2KWebs\\Lafise\\';
@@ -25,6 +26,7 @@ spl_autoload_register(static function (string $class): void {
         }
     }
 });
+Y2KWebs\Lafise\Languages::register();
 register_activation_hook(__FILE__, [Y2KWebs\Lafise\Plugin::class, 'activate']);
 register_deactivation_hook(__FILE__, [Y2KWebs\Lafise\Plugin::class, 'deactivate']);
 add_action('plugins_loaded', [Y2KWebs\Lafise\Plugin::class, 'boot']);

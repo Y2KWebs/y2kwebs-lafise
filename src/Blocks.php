@@ -21,6 +21,6 @@ final class Blocks extends \Automattic\WooCommerce\Blocks\Payments\Integrations\
     }
     public function get_payment_method_data(): array
     {
-        return ['title' => $this->get_setting('title', 'Tarjeta — LAFISE'), 'supports' => ['products'], 'fields' => Gateway::fields()];
+        return ['title' => $this->get_setting('title', __('Card — LAFISE', 'y2kwebs-lafise')), 'supports' => ['products'], 'fields' => Gateway::fields()];
     }
 }

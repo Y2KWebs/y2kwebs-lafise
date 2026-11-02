@@ -4,7 +4,7 @@ Tags: woocommerce, payments, costa-rica, lafise
 Requires at least: 6.9
 Tested up to: 7.1
 Requires PHP: 8.2
-Stable tag: 0.2.1
+Stable tag: 0.2.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
@@ -28,6 +28,10 @@ This is an independent integration developed by [Y2KWebs](https://y2kwebs.com/).
 * Encrypted payment-attempt history and an administrator action to query payment status without making a new charge.
 * WooCommerce High-Performance Order Storage (HPOS) and traditional order storage.
 * No telemetry or checkout advertising. Optional [professional installation and support](https://y2kwebs.com/) is available separately.
+
+= Languages =
+
+The interface supports English and includes a complete Spanish translation for Spanish WordPress locales, even without downloaded language packs. Regional WordPress translations take precedence. The administrator follows the user language; checkout and payment verification follow the store language. Merchant-defined payment titles are preserved. Official directory translations are managed separately on Translate WordPress.
 
 = Requirements and current scope =
 
@@ -99,6 +103,12 @@ Password and API KEY are stored encrypted and are not displayed when reopening s
 
 == Changelog ==
 
+= 0.2.2 =
+
+* Added English source strings and a complete bundled Spanish catalogue, with fallback for Spanish locales.
+* Localized classic and block checkout, settings, payment verification, AJAX, status messages and order notes.
+* Preserved merchant-defined titles, bank field names and payment protocol behavior.
+
 = 0.2.1 =
 
 * Added an explicit signature rule for the direct 3DS challenge response, preserving the original amount units.
@@ -113,6 +123,9 @@ Password and API KEY are stored encrypted and are not displayed when reopening s
 * Added normal checkout and optional restricted testing mode, authenticated 3DS destinations and safe authentication retries.
 
 == Upgrade Notice ==
+
+= 0.2.2 =
+Adds English and bundled Spanish support. Existing merchant credentials and custom payment titles are preserved.
 
 = 0.2.1 =
 Improves direct 3DS challenge validation, decline handling and WordPress compatibility checks. Existing merchant settings are preserved.

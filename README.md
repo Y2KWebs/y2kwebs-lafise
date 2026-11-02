@@ -4,7 +4,9 @@ Plugin independiente, gratuito y de código abierto para integrar los pagos REST
 
 [WordPress.org: versión 0.2.1](https://wordpress.org/plugins/y2kwebs-lafise/) · [GitHub: release 0.2.1](https://github.com/Y2KWebs/y2kwebs-lafise/releases/tag/v0.2.1) · [Instalación y soporte profesional](https://y2kwebs.com/) · [Reportar un problema](https://github.com/Y2KWebs/y2kwebs-lafise/issues/new/choose)
 
-**Versión 0.2.1 — publicada en WordPress.org el 2 de noviembre de 2026.** Pasarela funcional con pagos reales comprobados en WooCommerce. Con esta versión se ha verificado un pago de USD 1 con desafío 3DS manual completado por el titular, pedido pagado e intento aprobado. Las pruebas automatizadas utilizan un banco simulado; quedan escenarios específicos por ampliar, según los [resultados y limitaciones](docs/validation.md). Es un desarrollo independiente, no un plugin oficial de LAFISE; no se afirma una alianza ni respaldo del banco.
+**Versión 0.2.2 — interfaz bilingüe.** Incluye español para cualquier variante española de WordPress e inglés como idioma fuente. Las traducciones regionales disponibles tienen prioridad. El administrador usa su idioma de usuario y la compra el de la tienda; los títulos personalizados se conservan. La validación comunitaria de las traducciones del directorio se gestiona por separado y no condiciona el español incluido.
+
+Pasarela funcional con pagos reales comprobados en WooCommerce. Con 0.2.1 se verificó un pago de USD 1 con desafío 3DS manual completado por el titular, pedido pagado e intento aprobado. Las regresiones de 0.2.2 utilizan un banco simulado; quedan escenarios específicos por ampliar, según los [resultados y limitaciones](docs/validation.md). Es un desarrollo independiente, no un plugin oficial de LAFISE; no se afirma una alianza ni respaldo del banco.
 
 ## Funcionalidades
 

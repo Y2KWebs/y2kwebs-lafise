@@ -1,19 +1,24 @@
 """Build the explicitly selected public plugin files, without development material."""
 from pathlib import Path
 import hashlib
+import gettext
+import io
+from struct import error as struct_error
 import re
 import zipfile
 
 ROOT = Path(__file__).resolve().parent.parent
-VERSION = "0.2.1"
+VERSION = "0.2.2"
 IMAGES = frozenset(("docs/images/checkout.jpg", "docs/images/settings.jpg"))
+MO_FILES = frozenset(("languages/y2kwebs-lafise-es_ES.mo",))
 # New files must be deliberately added; never recursively package documentation.
 FILES = (
     "y2kwebs-lafise.php", "uninstall.php", "readme.txt", "README.md", "LICENSE", "SECURITY.md", "CONTRIBUTING.md",
     "src/Bank.php", "src/Blocks.php", "src/Config.php", "src/Gateway.php",
     "src/Money.php", "src/Payments.php", "src/Plugin.php", "src/Protocol.php",
     "src/Refunds.php", "src/Routes.php", "src/Secrets.php", "src/Settings.php",
-    "src/Store.php", "src/ThreeDS.php",
+    "src/Store.php", "src/ThreeDS.php", "src/Languages.php",
+    "languages/y2kwebs-lafise.pot", "languages/y2kwebs-lafise-es_ES.po", "languages/y2kwebs-lafise-es_ES.mo",
     "assets/blocks.js", "assets/callback.js", "assets/checkout.css",
     "assets/checkout.js", "assets/jwe.mjs", "assets/verify.js",
     "config/protocol.json",
@@ -29,6 +34,14 @@ SECRET_PATTERN = re.compile(
 )
 
 
+def translation_text(data):
+    try:
+        catalogue = gettext.GNUTranslations(io.BytesIO(data))
+    except (OSError, UnicodeError, ValueError, struct_error) as error:
+        raise ValueError("Invalid translation catalogue") from error
+    return "\n".join(str(value) for pair in catalogue._catalog.items() for value in pair)
+
+
 def package(root=ROOT):
     root = Path(root).resolve()
     # Validate everything before replacing a previously generated artifact.
@@ -38,7 +51,9 @@ def package(root=ROOT):
         if path.is_symlink() or not path.resolve().is_relative_to(root):
             raise ValueError(f"Unsafe package path: {name}")
         data = path.read_bytes()
-        if name in IMAGES:
+        if name in MO_FILES:
+            content = translation_text(data)
+        elif name in IMAGES:
             if not data.startswith(b"\xff\xd8\xff") or not data.endswith(b"\xff\xd9") or len(data) > 2_000_000:
                 raise ValueError(f"Invalid public screenshot: {name}")
             content = data.decode("utf-8", errors="ignore")

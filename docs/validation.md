@@ -1,6 +1,23 @@
-# Validación 0.2.1 — versión preliminar preparada para revisión
+# Validación del plugin
 
-Registro actualizado el **31 de octubre de 2026**. La versión 0.2.1 incorpora la firma del desafío 3DS directo y la clasificación segura del rechazo `59` de Process3DS. El mantenedor la ha instalado y completado un pago real con desafío 3DS manual; pedido pagado e intento aprobado se comprobaron por API autenticada. La actualización sigue pendiente de publicación. Las pruebas reales y las suites automatizadas con banco simulado se distinguen a continuación.
+Registro actualizado el **2 de noviembre de 2026**. 0.2.2 añade idiomas sin cambiar el protocolo de pagos. La versión 0.2.1 fue publicada en WordPress.org y conserva el pago real documentado abajo. Las comprobaciones de 0.2.2 usan datos ficticios y banco simulado.
+
+## Resultados de idiomas y regresión 0.2.2
+
+| Comprobación local | Resultado |
+|---|---|
+| Catálogo | 70 cadenas con español completo; igualdad con la extracción de WP-CLI; POT/MO reproducibles |
+| Idiomas en WordPress 6.9.4 / WooCommerce 10.3.0 | 64 aserciones: es_CR, es_ES, es_MX, es_AR, en_US, en_GB, prioridad regional parcial, cambio/restauración de locale, checkout clásico/bloques, títulos personalizados, configuración JS y AJAX con idioma distinto de administrador/tienda |
+| Protocolo y transporte | 53 y 40 aserciones superadas; sin llamadas bancarias reales |
+| Almacenamiento clásico y HPOS | 65 aserciones por almacenamiento |
+| Ajustes | 17 aserciones superadas |
+| Seguridad HTTP y HTML | 31 aserciones; JSON de mensajes 3DS conservado por KSES y CSP sin cambios; fixture rechaza carga temprana de traducciones |
+| JavaScript | 3 pruebas: cifrado JWE y mensajes/estados de verificación traducidos |
+| Python | 9 pruebas: cobertura de catálogo, compilación UTF-8, archivos reproducibles, exclusión de material privado y rechazo de MO inválidos |
+| ZIP instalable | 40 archivos, incluido POT/PO/MO; activación y 12 aserciones de versión, ajustes, API, exclusión de herramientas y español sin paquete descargado |
+| Plugin Check 2.1.0 sobre el ZIP | Comprobaciones estáticas y de ejecución sin errores ni avisos; sin excluir categorías o códigos |
+
+Las traducciones oficiales del directorio es_ES/es_CR requieren validación comunitaria independiente. La importación con estado Waiting no equivale a aprobación ni a generación de paquetes. No se ha realizado un nuevo pago real con 0.2.2.
 
 ## Antecedentes de uso real
 

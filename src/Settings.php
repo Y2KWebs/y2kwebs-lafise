@@ -42,7 +42,7 @@ final class Settings
             'permission_callback' => static fn () => current_user_can('manage_woocommerce'),
             'callback' => static function (\WP_REST_Request $request): \WP_REST_Response|\WP_Error {
                 $attempt = (new Store())->find($request['reference']);
-                if (!$attempt) { return new \WP_Error('attempt_not_found', 'Attempt not found.', ['status' => 404]); }
+                if (!$attempt) { return new \WP_Error('attempt_not_found', __('Attempt not found.', 'y2kwebs-lafise'), ['status' => 404]); }
                 return new \WP_REST_Response(['order_id' => (int) $attempt['order_id'], 'state' => $attempt['state'],
                     'reason' => $attempt['data']['reason'] ?? null, 'diagnostic' => $attempt['data']['diagnostic'] ?? null,
                     'receipt_available' => !empty($attempt['data']['receipt']),
@@ -55,18 +55,18 @@ final class Settings
     {
         if ($request->get_method() === 'POST') {
             $input = $request->get_json_params();
-            if (!is_array($input)) { return new \WP_Error('invalid_settings', 'JSON object required.', ['status' => 400]); }
+            if (!is_array($input)) { return new \WP_Error('invalid_settings', __('JSON object required.', 'y2kwebs-lafise'), ['status' => 400]); }
             $fields = (new Gateway())->form_fields;
             $settings = (array) get_option(self::OPTION, []);
             foreach ($input as $key => $value) {
                 if (!isset($fields[$key]) || !is_string($value) || strlen($value) > 4096 || preg_match('/[\x00-\x1f\x7f]/', $value)) {
-                    return new \WP_Error('invalid_settings', 'Invalid setting.', ['status' => 400]);
+                    return new \WP_Error('invalid_settings', __('Invalid setting.', 'y2kwebs-lafise'), ['status' => 400]);
                 }
                 if (isset($fields[$key]['options']) && !array_key_exists($value, $fields[$key]['options'])) {
-                    return new \WP_Error('invalid_settings', 'Invalid choice.', ['status' => 400]);
+                    return new \WP_Error('invalid_settings', __('Invalid choice.', 'y2kwebs-lafise'), ['status' => 400]);
                 }
                 if (in_array($key, ['enabled','clear_secrets'], true) && !in_array($value, ['yes','no'], true)) {
-                    return new \WP_Error('invalid_settings', 'Invalid switch.', ['status' => 400]);
+                    return new \WP_Error('invalid_settings', __('Invalid switch.', 'y2kwebs-lafise'), ['status' => 400]);
                 }
                 $settings[$key] = in_array($key,['password','merchant_pay_id'],true) ? $value : sanitize_text_field($value);
             }

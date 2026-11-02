@@ -4,6 +4,8 @@ La versión **0.2.1** está disponible en [WordPress.org](https://wordpress.org/
 
 La [documentación de WordPress.org](https://github.com/Y2KWebs/y2kwebs-lafise/blob/main/docs/wordpress-org.md) conserva los destinos, verificaciones y hashes del paquete publicado. Los pagos reales y las pruebas con banco simulado se distinguen en [validación](validation.md).
 
+La actualización 0.2.2 añade inglés fuente y español incluido. Su publicación funcional es independiente de la aprobación comunitaria de las traducciones oficiales es_ES/es_CR. Conservar 0.2.1 y no dar por concluida la localización del directorio mientras existan propuestas pendientes o no se hayan generado sus paquetes oficiales.
+
 ## Cambios que no requieren una release
 
 La documentación del repositorio, los enlaces de instalación, los registros de publicación y las fuentes de las imágenes se mantienen con commits y PR normales. El icono y la cabecera del directorio se publican en assets de SVN. Estos cambios no requieren una nueva etiqueta de GitHub, una Release ni un incremento de versión del plugin.
@@ -15,6 +17,7 @@ Conservar los ZIP y tags publicados. Una compilación de comprobación del árbo
 1. Actualizar la versión y las referencias correspondientes en cabecera, metadatos, pruebas y herramientas de empaquetado.
 2. Ejecutar las comprobaciones de [desarrollo](development.md), registrar los resultados reales en [validación](validation.md) y revisar el diff completo. No copiar documentos ni evidencias bancarias privadas.
 3. Ejecutar `python scripts/check_public.py` y las pruebas de empaquetado. Revisar por separado los archivos del repositorio y los seleccionados para el ZIP.
+   Regenerar los catálogos con `python scripts/build_translations.py` y verificar `--check` antes de empaquetar. `scripts/prepare_wordpress_org.py` prepara cada versión por separado en `dist/wordpress-org/<versión>/`, sin sobrescribir candidatos anteriores.
 4. Ejecutar `python scripts/package.py`. Comprobar instalación, activación, acceso a ajustes y Plugin Check sobre la copia extraída en el entorno local aislado. Si cambia un archivo empaquetado, regenerar el candidato y repetir las comprobaciones afectadas.
 5. Integrar el PR cuando pasen las verificaciones y se resuelvan los comentarios de revisión. Crear el tag y la Release solo cuando corresponda publicar esa versión, siguiendo [CONTRIBUTING.md](../CONTRIBUTING.md).
 6. Adjuntar el ZIP instalable verificado y su SHA-256. Marcar como pre-release las versiones preliminares. Conservar las versiones anteriores.

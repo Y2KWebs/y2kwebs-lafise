@@ -6,6 +6,11 @@ namespace Y2KWebs\Lafise {
 }
 namespace {
     if (getenv('Y2K_LAFISE_LOCAL_TEST') !== '1') { return; }
+    add_action('doing_it_wrong_run', static function ($function, $message) {
+        if ($function === '_load_textdomain_just_in_time' && str_contains($message, 'y2kwebs-lafise')) {
+            throw new \RuntimeException('Plugin translations loaded before init.');
+        }
+    }, 10, 2);
     define('Y2K_LAFISE_PRIVATE', ['username'=>'fixture','password'=>'fixture','merchant_pay_id'=>'fixture-key',
         'merchant_id'=>'FIXTUREM','terminal_id'=>'FIXTURET','type_request'=>'TEST','currency'=>'USD','pilot_limit_minor'=>100,
         'evidence'=>['USD'=>['three_ds'=>'LOCAL-SYNTHETIC-ONLY']]]);
