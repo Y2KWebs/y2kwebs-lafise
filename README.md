@@ -2,7 +2,7 @@
 
 Plugin independiente, gratuito y de código abierto para integrar los pagos REST de **LAFISE Costa Rica en WooCommerce**, desarrollado por [Y2KWebs](https://y2kwebs.com/). Sin registro obligatorio, telemetría ni anuncios en el checkout.
 
-[WordPress.org: versión 0.2.1](https://wordpress.org/plugins/y2kwebs-lafise/) · [GitHub: release 0.2.1](https://github.com/Y2KWebs/y2kwebs-lafise/releases/tag/v0.2.1) · [Instalación y soporte profesional](https://y2kwebs.com/) · [Reportar un problema](https://github.com/Y2KWebs/y2kwebs-lafise/issues/new/choose)
+[WordPress.org: versión 0.2.2](https://wordpress.org/plugins/y2kwebs-lafise/) · [GitHub: release 0.2.2](https://github.com/Y2KWebs/y2kwebs-lafise/releases/tag/v0.2.2) · [Instalación y soporte profesional](https://y2kwebs.com/) · [Reportar un problema](https://github.com/Y2KWebs/y2kwebs-lafise/issues/new/choose)
 
 **Versión 0.2.2 — interfaz bilingüe.** Incluye español para cualquier variante española de WordPress e inglés como idioma fuente. Las traducciones regionales disponibles tienen prioridad. El administrador usa su idioma de usuario y la compra el de la tienda; los títulos personalizados se conservan. La validación comunitaria de las traducciones del directorio se gestiona por separado y no condiciona el español incluido.
 

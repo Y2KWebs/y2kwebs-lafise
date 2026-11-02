@@ -1,6 +1,6 @@
 # Versiones y canales de distribución
 
-La versión **0.2.1** está disponible en [WordPress.org](https://wordpress.org/plugins/y2kwebs-lafise/) y en la [release existente de GitHub](https://github.com/Y2KWebs/y2kwebs-lafise/releases/tag/v0.2.1). La release de GitHub se publicó el 31 de octubre de 2026 como preliminar. WordPress.org aprobó la inclusión y recibió la primera publicación el 2 de noviembre, revisión SVN `3780395`; los iconos y las cabeceras se añadieron en `3780418`.
+La versión **0.2.2** está disponible en [WordPress.org](https://wordpress.org/plugins/y2kwebs-lafise/) y en la [release preliminar de GitHub](https://github.com/Y2KWebs/y2kwebs-lafise/releases/tag/v0.2.2). Se publicó el 2 de noviembre de 2026 tras integrar el PR #3 con CI satisfactorio; revisión SVN `3780516`. La versión 0.2.1 y sus artefactos se conservan intactos. WordPress.org aprobó la inclusión y recibió la primera publicación el 2 de noviembre, revisión SVN `3780395`; los iconos y las cabeceras se añadieron en `3780418`.
 
 La [documentación de WordPress.org](https://github.com/Y2KWebs/y2kwebs-lafise/blob/main/docs/wordpress-org.md) conserva los destinos, verificaciones y hashes del paquete publicado. Los pagos reales y las pruebas con banco simulado se distinguen en [validación](validation.md).
 

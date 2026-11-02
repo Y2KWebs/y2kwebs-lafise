@@ -1,6 +1,6 @@
 # Publicación en WordPress.org
 
-El plugin está publicado en [WordPress.org](https://wordpress.org/plugins/y2kwebs-lafise/) con el slug `y2kwebs-lafise`, bajo la cuenta `y2kwebs`. La versión publicada es **0.2.1**. En GitHub también existe la [release v0.2.1](https://github.com/Y2KWebs/y2kwebs-lafise/releases/tag/v0.2.1), publicada el 31 de octubre de 2026.
+El plugin está publicado en [WordPress.org](https://wordpress.org/plugins/y2kwebs-lafise/) con el slug `y2kwebs-lafise`, bajo la cuenta `y2kwebs`. La versión publicada es **0.2.2**. En GitHub también existe la [release preliminar v0.2.2](https://github.com/Y2KWebs/y2kwebs-lafise/releases/tag/v0.2.2), publicada el 2 de noviembre de 2026. Se conserva la versión anterior 0.2.1.
 
 Los comercios pueden instalarlo desde el directorio de WordPress o descargar el ZIP de su ficha. Los requisitos, el servicio bancario externo y las limitaciones están en [readme.txt](../readme.txt); las pruebas reales y simuladas se distinguen en [validación](validation.md).
 
@@ -12,8 +12,19 @@ Los comercios pueden instalarlo desde el directorio de WordPress o descargar el 
 | 2 de noviembre de 2026 | Inclusión aprobada por el equipo de plugins; repositorio SVN asignado: https://plugins.svn.wordpress.org/y2kwebs-lafise/. |
 | 2 de noviembre de 2026 | Primera publicación, revisión [3780395](https://plugins.trac.wordpress.org/changeset/3780395/y2kwebs-lafise): contenido 0.2.1 en trunk y tag, más dos capturas con datos ficticios. |
 | 2 de noviembre de 2026 | Iconos y cabeceras publicados en assets mediante la revisión [3780418](https://plugins.trac.wordpress.org/changeset/3780418/y2kwebs-lafise). |
+| 2 de noviembre de 2026 | Publicación bilingüe 0.2.2 en trunk y tag, revisión [3780516](https://plugins.trac.wordpress.org/changeset/3780516/y2kwebs-lafise), tras integrar el [PR #3](https://github.com/Y2KWebs/y2kwebs-lafise/pull/3) con CI satisfactorio. |
 
 La aprobación del directorio corresponde al plugin independiente de Y2KWebs; no implica certificación, alianza ni respaldo de LAFISE.
+
+## Comprobaciones de la publicación 0.2.2
+
+CI pasó en PHP 8.2/8.4, integración WordPress clásica/HPOS, matriz de seis idiomas, ZIP instalable y Plugin Check. La API del directorio identifica 0.2.2 y la [descarga pública](https://downloads.wordpress.org/plugin/y2kwebs-lafise.0.2.2.zip) contiene los mismos 40 archivos del ZIP verificado, byte por byte, incluidos POT/PO/MO. Se comprobaron trunk y tag contra ese ZIP antes del envío y se conservaron los 36 archivos del tag 0.2.1.
+
+SHA-256 del ZIP verificado y adjunto a GitHub: `07560f0901c4b020cfd79050b56bec7a36550fba8a739135d3a39b10d049253f`.
+
+SHA-256 del ZIP generado por WordPress.org: `51c86990c0121d5ed54e65d7cc15136e2e6d02e864a49d3caddfb8cd95b6f7d0`.
+
+Las diferencias de compresión no afectan a la igualdad del contenido. Los registros de publicación posteriores se mantienen mediante PR de documentación; no se reenvían al tag publicado ni generan otra release.
 
 ## Comprobaciones de la publicación 0.2.1
 
@@ -75,6 +86,8 @@ La integración original utiliza la política de privacidad pública de LAFISE C
 0.2.2 mantiene el readme en inglés y añade inglés fuente y español incluido al software. Los catálogos del directorio se presentan por separado en los proyectos Stable, Development, Stable Readme y Development Readme para es_ES y es_CR. La cuenta `y2kwebs` puede importar propuestas con estado Waiting; ese permiso no permite aprobarlas.
 
 El español incluido funciona antes de la validación. El aviso «Este plugin aún no ha sido traducido…» depende de los paquetes oficiales de WordPress.org, no del MO incluido en el ZIP. Solo se dará por completada esa parte cuando se aprueben las traducciones, se generen los paquetes regionales y se comprueben las fichas localizadas. La solicitud de revisión seguirá el [procedimiento de Polyglots](https://make.wordpress.org/polyglots/handbook/plugin-theme-authors-guide/pte-request/); no se atribuye aprobación a una importación en Waiting.
+
+En la comprobación posterior a la publicación, Development ya exponía las 70 cadenas inglesas. Stable todavía exponía las 57 anteriores y ambos readmes las 56 anteriores; los catálogos nuevos contienen 70 entradas de software y 61 de ficha por locale. Se prepararon los cuatro PO y las instrucciones de ocho importaciones para el mantenedor. La carga mediante navegador no llegó a enviarse porque la extensión carecía de acceso a archivos locales; el mantenedor se ofreció a importarlos manualmente. No hay propuestas importadas ni traducciones aprobadas verificadas en esta entrega, y la API no devuelve paquetes oficiales para 0.2.2.
 
 ## Referencias oficiales
 
