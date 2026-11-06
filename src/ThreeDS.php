@@ -40,14 +40,51 @@ final class ThreeDS
         return $id;
     }
 
-    public static function action(string $state, string $url, array $fields, ?string $expected = null): array
+    /** Fixed internal codes only; exception text and bank payloads are never retained. */
+    public static function failure(\Throwable $error): ?string
     {
+        if (!$error instanceof \DomainException) { return null; }
+        return match ($error->getMessage()) {
+            'Unsafe issuer destination.' => 'invalid_destination',
+            'Ambiguous 3DS field.' => 'ambiguous_fields',
+            'Invalid 3DS method_data.' => 'invalid_method_data',
+            'Invalid 3DS creq.' => 'invalid_creq',
+            'Invalid 3DS session_data.' => 'invalid_session_data',
+            'Invalid 3DS identifier.' => 'invalid_transaction_id',
+            'Mismatched 3DS session.', 'Mismatched challenge.' => 'challenge_identifier_mismatch',
+            'Missing prior receipt.', 'Invalid 3DS continuation.' => 'invalid_continuation',
+            default => null,
+        };
+    }
+
+    private static function actionId(mixed $value, string $field): string
+    {
+        $valid = is_string($value);
+        if ($valid) {
+            try { self::decode($value); }
+            catch (\DomainException) { $valid = false; }
+        }
+        if (!$valid) {
+            throw match ($field) {
+                'method_data' => new \DomainException('Invalid 3DS method_data.'),
+                'creq' => new \DomainException('Invalid 3DS creq.'),
+                'session_data' => new \DomainException('Invalid 3DS session_data.'),
+                default => new \DomainException('Invalid 3DS continuation.'),
+            };
+        }
+        return self::id($value);
+    }
+
+    public static function action(string $state, mixed $url, array $fields, ?string $expected = null): array
+    {
+        if (!is_string($url)) { throw new \DomainException('Unsafe issuer destination.'); }
         self::destination($url);
-        $id = self::id($fields[$state === 'fingerprint' ? 'threeDSMethodData' : 'threeDSSessionData'] ?? '');
+        $id = self::actionId($fields[$state === 'fingerprint' ? 'threeDSMethodData' : 'threeDSSessionData'] ?? null,
+            $state === 'fingerprint' ? 'method_data' : 'session_data');
         if ($expected !== null && !hash_equals($expected, $id)) {
             throw new \DomainException('Mismatched 3DS session.');
         }
-        if ($state === 'challenge' && self::id($fields['creq'] ?? '') !== $id) {
+        if ($state === 'challenge' && self::actionId($fields['creq'] ?? null, 'creq') !== $id) {
             throw new \DomainException('Mismatched challenge.');
         }
         return ['action' => $url, 'fields' => $fields, 'transaction_id' => $id];

@@ -1,6 +1,16 @@
 # Validación del plugin
 
-Registro actualizado el **2 de noviembre de 2026**. 0.2.2 añade idiomas sin cambiar el protocolo de pagos. La versión 0.2.1 fue publicada en WordPress.org y conserva el pago real documentado abajo. Las comprobaciones de 0.2.2 usan datos ficticios y banco simulado.
+Registro actualizado el **6 de noviembre de 2026**. 0.2.3 mejora la compatibilidad de campos 3DS y la conservación de diagnósticos. Todas las nuevas comprobaciones usan datos ficticios y banco simulado. Los pagos reales documentados abajo corresponden a versiones anteriores y no se atribuyen a esta actualización.
+
+## Regresión de compatibilidad 3DS 0.2.3
+
+Se aceptan variantes de mayúsculas únicamente en los nombres finales de los campos de continuación 3DS. Los contenedores, los campos financieros y los callbacks POST mantienen nombres exactos. Los duplicados equivalentes se rechazan incluso con valores idénticos. No se amplían firmas, estados financieros, destinos ni reglas de UUID.
+
+Las causas específicas se guardan como códigos cerrados en `diagnostic.three_ds_failure`; no contienen cuerpos bancarios, datos interactivos ni textos arbitrarios de excepciones. Las consultas inconclusas conservan la causa principal; una aprobación verificada limpia el diagnóstico activo. Las pruebas cubren preparación inicial fallida, Process3DS ya enviado y recuperación sin reenviar ventas ni autenticación. No se revalidan ni modifican masivamente intentos históricos.
+
+Comprobaciones ejecutadas en la preparación: 119 aserciones de protocolo y 55 de transporte tanto en PHP 8.2 como 8.4, sintaxis de 26 PHP, 3 pruebas JavaScript y 9 de empaquetado/traducciones. La integración pasó 89 aserciones con almacenamiento clásico y otras 89 con HPOS, más 17 de ajustes, 31 de seguridad HTTP y 64 de idiomas. El catálogo conserva 70 cadenas inglesas con español completo y POT/MO reproducibles. Todas las respuestas bancarias son simuladas y no se han realizado nuevos pagos reales.
+
+El ZIP se genera desde 40 archivos seleccionados y pasó 12 aserciones de activación y acceso a ajustes. Plugin Check 2.1.0, con su bootstrap de ejecución y sin omitir categorías ni códigos, no reportó errores ni avisos. Los mensajes internos de fallo son literales controlados, sin añadir excepciones al analizador. Los hashes y la revisión de publicación se registran en las notas de la release; los resultados de CI se comprobarán sobre el commit integrado antes de distribuirlo.
 
 ## Resultados de idiomas y regresión 0.2.2
 

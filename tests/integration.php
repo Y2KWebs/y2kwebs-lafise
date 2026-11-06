@@ -45,18 +45,35 @@ $http = static function ($pre, $args, $url) use (&$calls, &$mode, $pem, $id, $en
             $body['ResponseCode'] = '3DS-PRC-002';
             $body['ApiSecurity']['Message_signature'] = hash('sha256', 'fixture-key' . '3DS-PRC-002' . '100' . 'FIXTUREM' . '0' . 'USD');
             $body['ExtraFile'] = ['Action' => 'https://issuer.bank.com/acs', 'Creq' => $encode(['threeDSServerTransID' => $id]), 'ThreeDSSessionData' => $encode($id)];
+            if (in_array($mode, ['direct-camel', 'direct-upper'], true)) {
+                $names = $mode === 'direct-camel' ? ['action', 'creq', 'threeDSSessionData'] : ['ACTION', 'CREQ', 'THREEDSSESSIONDATA'];
+                $body['ExtraFile'] = array_combine($names, array_values($body['ExtraFile']));
+            }
+            if ($mode === 'direct-setup-bad') { $body['ExtraFile']['Creq'] = 'NOT VALID'; }
         }
     } elseif ($operation === 'Process3DS') {
-        $body = ['ResponseCode' => '00', 'PaymentInformation' => ['Amount' => '1.00', 'Currency_code' => 'USD',
-            'Merchant_Id' => 'FIXTUREM', 'Terminal_Id' => 'FIXTURET', 'AuthorizationCode' => 'TEST', 'Ref1' => 'BANKREF', 'Ref3' => '000001'],
-            'ApiSecurity' => ['Message_signature' => hash('sha256', 'fixture-key' . 'BANKREF' . '00' . '1.00' . 'FIXTUREM' . '0' . 'USD')]];
-        if (in_array($mode, ['direct-decline', 'direct-forged', 'direct-conflict', 'direct-unknown'], true)) {
-            $code = $mode === 'direct-unknown' ? '96' : '59';
-            $body['ResponseCode'] = $code;
-            $body['PaymentInformation']['AuthorizationCode'] = $mode === 'direct-conflict' ? 'CONTRADICTORY' : '';
-            $body['ApiSecurity']['Message_signature'] = $mode === 'direct-forged' ? str_repeat('0', 64)
-                : hash('sha256', 'fixture-key' . 'BANKREF' . $code . '1.00' . 'FIXTUREM' . '0' . 'USD');
+        $request = json_decode($args['body'], true);
+        if ($mode === 'fingerprint-challenge' && !empty($request['threeDSData'])) {
+            $body = ['ResponseCode' => '3DS-PRC-002', 'ACTION' => 'https://issuer.bank.com/acs',
+                'CREQ' => $encode(['threeDSServerTransID' => $id]), 'THREEDSSESSIONDATA' => $encode($id)];
+        } elseif ($mode === 'direct-process-bad') {
+            $body = ['ResponseCode' => '3DS-PRC-002', 'action' => 'https://issuer.bank.com/acs', 'creq' => 'NOT VALID',
+                'threeDSSessionData' => $encode($id), 'Unrelated' => 'SYNTHETIC-PRIVATE-BODY'];
+        } else {
+            $body = ['ResponseCode' => '00', 'PaymentInformation' => ['Amount' => '1.00', 'Currency_code' => 'USD',
+                'Merchant_Id' => 'FIXTUREM', 'Terminal_Id' => 'FIXTURET', 'AuthorizationCode' => 'TEST', 'Ref1' => 'BANKREF', 'Ref3' => '000001'],
+                'ApiSecurity' => ['Message_signature' => hash('sha256', 'fixture-key' . 'BANKREF' . '00' . '1.00' . 'FIXTUREM' . '0' . 'USD')]];
+            if (in_array($mode, ['direct-decline', 'direct-forged', 'direct-conflict', 'direct-unknown'], true)) {
+                $code = $mode === 'direct-unknown' ? '96' : '59';
+                $body['ResponseCode'] = $code;
+                $body['PaymentInformation']['AuthorizationCode'] = $mode === 'direct-conflict' ? 'CONTRADICTORY' : '';
+                $body['ApiSecurity']['Message_signature'] = $mode === 'direct-forged' ? str_repeat('0', 64)
+                    : hash('sha256', 'fixture-key' . 'BANKREF' . $code . '1.00' . 'FIXTUREM' . '0' . 'USD');
+            }
         }
+    } elseif ($operation === 'StatusCheck') {
+        if ($mode !== 'query-approved') { return new WP_Error('fixture_query_failed', 'SYNTHETIC-PRIVATE-BODY'); }
+        $body = ['Status' => 'OK', 'ResponseCode' => '00', 'ExtraFile' => ['OrderId' => '000001', 'Terminal_Id' => 'FIXTURET', 'Currency' => 'USD', 'Amount' => '1.00']];
     } else { return new WP_Error('test_unexpected_request', 'Unexpected operation.'); }
     return ['response' => ['code' => 200, 'message' => 'OK'], 'headers' => [], 'body' => wp_json_encode($body), 'cookies' => []];
 };
@@ -214,6 +231,62 @@ try {
         }
         $check(count(array_filter($calls, fn ($c) => $c === 'Sale')) === $beforeSale + ($verified ? 1 : 0), 'Unknown outcomes cannot resend Sale: ' . $mode);
     }
+    foreach (['direct-camel', 'direct-upper', 'fingerprint-challenge'] as $mode) {
+        $variantOrder = $create();
+        $stock = wc_get_product($product->get_id())->get_stock_quantity();
+        $beforeCompleted = $completed;
+        $variant = $service->start($variantOrder, $input());
+        if ($mode === 'fingerprint-challenge') {
+            $check($variant['state'] === 'fingerprint', 'Fingerprint starts with the original signature');
+            $service->callback($variant['reference'], $variant['data']['token'], $callback);
+            $variant = (new Store())->find($variant['reference']);
+        }
+        $check($variant['state'] === 'challenge' && $variant['data']['transaction_id'] === $id && !wc_get_order($variantOrder->get_id())->is_paid(), 'Casing variant waits for correlated financial result: ' . $mode);
+        $processCalls = count(array_filter($calls, fn ($c) => $c === 'Process3DS'));
+        $service->callback($variant['reference'], $variant['data']['token'], $challengeCallback);
+        $service->callback($variant['reference'], $variant['data']['token'], $challengeCallback);
+        $check(wc_get_order($variantOrder->get_id())->is_paid() && $completed === $beforeCompleted + 1, 'Casing variant confirms exactly once: ' . $mode);
+        $check(count(array_filter($calls, fn ($c) => $c === 'Process3DS')) === $processCalls + 1, 'Casing variant callback remains deduplicated: ' . $mode);
+        $check(wc_get_product($product->get_id())->get_stock_quantity() === $stock - 1, 'Casing variant reduces stock once: ' . $mode);
+    }
+    $mode = 'direct-setup-bad';
+    $setupOrder = $create();
+    $setup = $service->start($setupOrder, $input());
+    $status = $service->status($setup['reference'], $setup['data']['token']);
+    $check($setup['state'] === 'declined' && $status['reason'] === 'authentication_setup_failed' && $status['retry'] !== null, 'Known pre-authentication setup failure remains retryable');
+    $check($setup['data']['diagnostic']['three_ds_failure'] === 'invalid_creq', 'Specific setup failure persisted encrypted');
+    $summary = $server->dispatch(new WP_REST_Request('GET', '/y2k-lafise/v1/attempts/' . $setup['reference']))->get_data();
+    $check($summary['diagnostic']['three_ds_failure'] === 'invalid_creq' && !isset($summary['receipt']) && !isset($summary['token']), 'Administrative API exposes only safe 3DS subtype');
+
+    $mode = 'direct-process-bad';
+    $uncertainOrder = $create();
+    $uncertain = $service->start($uncertainOrder, $input());
+    $service->callback($uncertain['reference'], $uncertain['data']['token'], $challengeCallback);
+    $store = new Store();
+    $uncertain = $store->find($uncertain['reference']);
+    $originalDiagnostic = $uncertain['data']['diagnostic'];
+    $check($uncertain['state'] === 'unknown' && $originalDiagnostic['three_ds_failure'] === 'invalid_creq', 'Submitted Process3DS failure remains uncertain');
+    $check(!str_contains(wp_json_encode($uncertain), 'SYNTHETIC-PRIVATE-BODY'), 'Bank body excluded from persistent diagnostic');
+    $beforeCalls = count(array_filter($calls, fn ($c) => in_array($c, ['Sale', 'Process3DS'], true)));
+    $service->status($uncertain['reference'], $uncertain['data']['token']);
+    $service->reconcile($uncertain['reference']);
+    $after = $store->find($uncertain['reference']);
+    $check($after['data']['reason'] === 'bank_result_unavailable' && $after['data']['diagnostic'] === $originalDiagnostic, 'Manual-review reconciliation preserves primary failure');
+    $data = $after['data']; $data['queried_at'] = 0;
+    $data['ref3'] = '000001'; $data['receipt'] = ['bank_reference' => 'BANKREF', 'authorization' => 'TEST'];
+    $store->save($after, 'unknown', $data);
+    $mode = 'query-timeout';
+    $service->reconcile($uncertain['reference']);
+    $after = $store->find($uncertain['reference']);
+    $check($after['data']['reason'] === 'bank_result_unavailable' && $after['data']['diagnostic'] === $originalDiagnostic, 'Inconclusive bank query preserves specific 3DS diagnostic');
+    $check($service->status($after['reference'], $after['data']['token'])['retry'] === null && !wc_get_order($uncertainOrder->get_id())->is_paid(), 'Inconclusive query cannot enable payment retry');
+    $data = $after['data']; $data['queried_at'] = 0; $store->save($after, 'unknown', $data);
+    $mode = 'query-approved'; $beforeCompleted = $completed;
+    $service->reconcile($uncertain['reference']); $service->reconcile($uncertain['reference']);
+    $after = $store->find($uncertain['reference']);
+    $check($after['state'] === 'approved' && !isset($after['data']['reason']) && !isset($after['data']['diagnostic']), 'Verified query approval clears obsolete active failure');
+    $check(wc_get_order($uncertainOrder->get_id())->is_paid() && $completed === $beforeCompleted + 1, 'Query approval completes order once');
+    $check(count(array_filter($calls, fn ($c) => in_array($c, ['Sale', 'Process3DS'], true))) === $beforeCalls, 'Recovery never resends Sale or Process3DS');
     echo 'PASS: '.$checks.' integration assertions; HPOS='.(get_option('woocommerce_custom_orders_table_enabled') ?: 'no').'; WordPress='.get_bloginfo('version').'; WooCommerce='.WC_VERSION.'; PHP='.PHP_VERSION."\n";
 } finally {
     remove_filter('pre_http_request',$http,10);

@@ -61,6 +61,25 @@ final class Protocol
         return hash('sha256', $text);
     }
 
+    /** Only 3DS leaf names are case-insensitive; reject aliases even when their values match. */
+    private static function threeDsValue(array $payload, string $path): mixed
+    {
+        if ($path === '') { return null; }
+        $parts = explode('.', $path);
+        $name = array_pop($parts);
+        $parent = $parts === [] ? $payload : self::path($payload, implode('.', $parts));
+        if (!is_array($parent)) { return null; }
+        $found = false;
+        $value = null;
+        foreach ($parent as $key => $candidate) {
+            if (!is_string($key) || strcasecmp($key, $name) !== 0) { continue; }
+            if ($found) { throw new \DomainException('Ambiguous 3DS field.'); }
+            $found = true;
+            $value = $candidate;
+        }
+        return $value;
+    }
+
     public static function expand(mixed $template, array $context): mixed
     {
         if (is_array($template)) {
@@ -109,8 +128,9 @@ final class Protocol
             if (!$authenticatedTransport || empty($prior['transaction_id']) || empty($prior['receipt'])) {
                 throw new \DomainException('Missing prior receipt.');
             }
-            $action = ThreeDS::action('challenge', $payload['Action'] ?? '',
-                ['creq' => $payload['Creq'] ?? '', 'threeDSSessionData' => $payload['ThreeDSSessionData'] ?? ''], $prior['transaction_id']);
+            $map = $schema['challenge'];
+            $action = ThreeDS::action('challenge', self::threeDsValue($payload, $map['action']),
+                ['creq' => self::threeDsValue($payload, $map['creq']), 'threeDSSessionData' => self::threeDsValue($payload, $map['session_data'])], $prior['transaction_id']);
             return ['state' => 'challenge', 'receipt' => $prior['receipt'], 'action' => $action,
                 'transaction_id' => $action['transaction_id'], 'ref3' => $prior['ref3'] ?? ''];
         }
@@ -156,15 +176,16 @@ final class Protocol
         if (in_array($state, ['fingerprint', 'challenge'], true)) {
             if (!$authenticatedTransport) { throw new \DomainException('Unauthenticated 3DS destination.'); }
             $map = $schema['three_ds'];
-            $fields = $state === 'fingerprint'
-                ? ['threeDSMethodData' => self::path($payload, $map['method_data'])]
-                : ['creq' => self::path($payload, $map['creq']), 'threeDSSessionData' => self::path($payload, $map['session_data'])];
             try {
-                $action = ThreeDS::action($state, self::path($payload, $map[$state === 'fingerprint' ? 'method_url' : 'action']) ?? '',
+                $fields = $state === 'fingerprint'
+                    ? ['threeDSMethodData' => self::threeDsValue($payload, $map['method_data'])]
+                    : ['creq' => self::threeDsValue($payload, $map['creq']), 'threeDSSessionData' => self::threeDsValue($payload, $map['session_data'])];
+                $action = ThreeDS::action($state, self::threeDsValue($payload, $map[$state === 'fingerprint' ? 'method_url' : 'action']),
                     $fields, $prior['transaction_id'] ?? null);
             } catch (\Throwable $error) {
                 if ($operation === 'sale' && $data['authorization'] === '') {
-                    return ['state' => 'declined', 'reason' => 'authentication_setup_failed'];
+                    return ['state' => 'declined', 'reason' => 'authentication_setup_failed',
+                        'diagnostic' => ['three_ds_failure' => ThreeDS::failure($error) ?? 'invalid_continuation']];
                 }
                 throw $error;
             }

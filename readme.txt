@@ -4,7 +4,7 @@ Tags: woocommerce, payments, costa-rica, lafise
 Requires at least: 6.9
 Tested up to: 7.1
 Requires PHP: 8.2
-Stable tag: 0.2.2
+Stable tag: 0.2.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
@@ -103,6 +103,13 @@ Password and API KEY are stored encrypted and are not displayed when reopening s
 
 == Changelog ==
 
+= 0.2.3 =
+
+* Accept unambiguous casing variants of 3DS continuation fields while keeping financial fields, signatures and callback names exact.
+* Reject duplicate 3DS field aliases, including identical values.
+* Retain fixed, private 3DS failure diagnostics across inconclusive status queries and clear them after verified approval.
+* Preserve English source strings and bundled Spanish translations.
+
 = 0.2.2 =
 
 * Added English source strings and a complete bundled Spanish catalogue, with fallback for Spanish locales.
@@ -123,6 +130,9 @@ Password and API KEY are stored encrypted and are not displayed when reopening s
 * Added normal checkout and optional restricted testing mode, authenticated 3DS destinations and safe authentication retries.
 
 == Upgrade Notice ==
+
+= 0.2.3 =
+Improves compatibility with bank 3DS field names and preserves safe authentication failure diagnostics. Existing merchant settings and payment safeguards are preserved.
 
 = 0.2.2 =
 Adds English and bundled Spanish support. Existing merchant credentials and custom payment titles are preserved.

@@ -1,6 +1,6 @@
 {
   "name": "y2kwebs-lafise",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "private": true,
   "scripts": {
     "test": "node --test tests/jwe.test.mjs tests/verify-i18n.test.mjs",

@@ -26,6 +26,10 @@ Process3DS clasifica `59` como rechazo solo con firma y datos financieros válid
 
 ## Límites y datos
 
+Las continuaciones 3DS de Sale y del JSON de Process3DS admiten mayúsculas distintas únicamente en el último segmento de sus rutas (`Action`, `Creq`, `ThreeDSSessionData`, `threeDSMethodURL`, `threeDSMethodData`). El contenedor, los campos financieros y los callbacks POST mantienen sus nombres exactos. Dos claves equivalentes se rechazan, aunque sus valores coincidan. La adaptación conserva los valores originales y no cambia destinos permitidos, firmas, importes ni UUID.
+
+Un fallo 3DS guarda un submotivo fijo en `diagnostic.three_ds_failure`, sin cuerpos bancarios ni textos arbitrarios. Las consultas inconclusas conservan ese diagnóstico principal y su motivo; una aprobación posterior validada retira el fallo activo. Solo un fallo inicial de preparación con las condiciones existentes permite un nuevo intento solicitado por el comprador; un Process3DS ya enviado permanece incierto. No se añaden tablas ni migraciones.
+
 No se persisten tarjeta, CVV ni JWE. El historial financiero se conserva al desactivar o desinstalar. Los salts de WordPress forman parte del material de cifrado; su rotación requiere preparar la conciliación y las copias correspondientes. Véase [seguridad](../SECURITY.md).
 
 El modo Pruebas limita usuarios e importe, pero no es un sandbox bancario. Las devoluciones bancarias automáticas no están implementadas. La configuración del protocolo contiene endpoints y marcadores de campos, nunca credenciales de un comercio.
