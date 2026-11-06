@@ -66,7 +66,7 @@ try {
     $assert(str_contains($body, 'data-status-url=') && str_contains($body, 'data-message'), 'Verification selectors and status URL preserved');
     $messages = json_decode($dom->getElementsByTagName('main')->item(0)->getAttribute('data-messages'), true, 512, JSON_THROW_ON_ERROR);
     $assert(count($messages) === 7 && ($messages['retry'] ?? '') === 'Try the payment again', 'Verification JavaScript receives the complete escaped PHP message map');
-    $assert(str_contains($body, 'checkout.css?ver=0.2.2') && str_contains($body, 'verify.js?ver=0.2.2'), 'WordPress prints versioned stylesheet and verification script');
+    $assert(str_contains($body, 'checkout.css?ver=0.2.3') && str_contains($body, 'verify.js?ver=0.2.3'), 'WordPress prints versioned stylesheet and verification script');
     $assert(str_contains(wp_remote_retrieve_header($response, 'content-security-policy'), "script-src 'self'")
         && wp_remote_retrieve_header($response, 'referrer-policy') === 'no-referrer', 'Standalone security headers retained');
     $bad = ['cres' => $encode(['threeDSServerTransID' => '00000000-0000-4000-8000-000000000002']), 'threeDSSessionData' => $encode($id)];
@@ -76,7 +76,7 @@ try {
     $callback = ['cres' => $encode(['threeDSServerTransID' => $id, 'transStatus' => 'Y']), 'threeDSSessionData' => $encode($id)];
     $response = $request('callback', ['method' => 'POST', 'body' => $callback]);
     $assert(!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200
-        && str_contains(wp_remote_retrieve_body($response), 'callback.js?ver=0.2.2'), 'Correlated bank callback works without a WordPress browser nonce');
+        && str_contains(wp_remote_retrieve_body($response), 'callback.js?ver=0.2.3'), 'Correlated bank callback works without a WordPress browser nonce');
     $stored = $store->find($attempt['reference']);
     $assert($stored['state'] === 'unknown' && count($stored['data']['steps']) === 1
         && ($stored['data']['diagnostic']['failure'] ?? '') === 'transport_failed', 'Local web fixture intercepts Process3DS and retains uncertainty');

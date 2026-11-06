@@ -141,11 +141,25 @@ final class Payments
             'reference' => $a['reference'], 'ref3' => $d['ref3'] ?? ''];
     }
 
+    private static function resultData(array $prior, array $result): array
+    {
+        $data = array_merge($prior, $result);
+        unset($data['state']);
+        if ($result['state'] === 'approved') {
+            unset($data['reason'], $data['diagnostic']);
+        } elseif ($result['state'] === 'unknown' && isset($prior['diagnostic']['three_ds_failure'])
+            && !isset($result['diagnostic']['three_ds_failure'])) {
+            // An inconclusive status query cannot erase the primary authentication failure.
+            $data['diagnostic'] = $prior['diagnostic'];
+            if (isset($prior['reason'])) { $data['reason'] = $prior['reason']; }
+        }
+        return $data;
+    }
+
     private function apply(array $a, array $result): array
     {
         $state = $result['state'];
-        $data = array_merge($a['data'], $result);
-        unset($data['state']);
+        $data = self::resultData($a['data'], $result);
         if (!in_array($state, ['fingerprint', 'challenge'], true)) {
             unset($data['action']);
         } else {
@@ -215,7 +229,7 @@ final class Payments
                 ? (new Bank($this->config))->execute('inquire', $this->context($a), $data)
                 : ['state' => 'unknown', 'reason' => 'manual_review_required'];
             // Bounded recovery: automatic polling never resends Sale or Process3DS.
-            $a = $this->store->save($a, $result['state'], array_merge($data, $result));
+            $a = $this->store->save($a, $result['state'], self::resultData($data, $result));
             $this->syncOrder($a);
         });
     }

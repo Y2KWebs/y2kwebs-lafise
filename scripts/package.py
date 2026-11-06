@@ -8,7 +8,7 @@ import re
 import zipfile
 
 ROOT = Path(__file__).resolve().parent.parent
-VERSION = "0.2.2"
+VERSION = "0.2.3"
 IMAGES = frozenset(("docs/images/checkout.jpg", "docs/images/settings.jpg"))
 MO_FILES = frozenset(("languages/y2kwebs-lafise-es_ES.mo",))
 # New files must be deliberately added; never recursively package documentation.

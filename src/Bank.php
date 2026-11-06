@@ -117,6 +117,9 @@ final class Bank
             $payload = $this->request($operation, $context, $auth, $submitted);
             $this->diagnostic['stage'] = 'validation';
             $result = $this->protocol->validate($operation, $payload, $context, $prior, true);
+            if (isset($result['diagnostic']['three_ds_failure'])) {
+                $result['diagnostic'] = array_merge($this->diagnostic, ['failure' => 'authentication_setup_failed'], $result['diagnostic']);
+            }
             if ($result['state'] === 'unknown') {
                 return $result + ['reason' => 'unrecognized_bank_result', 'diagnostic' => $this->diagnostic + ['failure' => 'unrecognized_result']];
             }
@@ -135,6 +138,8 @@ final class Bank
                 'Invalid signature variant contract.' => 'protocol_contract_invalid',
                 default => 'response_validation_failed',
             };
+            $threeDsFailure = ThreeDS::failure($error);
+            if ($threeDsFailure !== null) { $this->diagnostic['three_ds_failure'] = $threeDsFailure; }
             if ($operation === 'sale' && !$submitted) {
                 return ['state' => 'declined', 'reason' => 'payment_not_sent', 'diagnostic' => $this->diagnostic];
             }

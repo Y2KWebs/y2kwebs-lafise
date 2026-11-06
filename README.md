@@ -2,11 +2,13 @@
 
 Plugin independiente, gratuito y de código abierto para integrar los pagos REST de **LAFISE Costa Rica en WooCommerce**, desarrollado por [Y2KWebs](https://y2kwebs.com/). Sin registro obligatorio, telemetría ni anuncios en el checkout.
 
-[WordPress.org: versión 0.2.2](https://wordpress.org/plugins/y2kwebs-lafise/) · [GitHub: release 0.2.2](https://github.com/Y2KWebs/y2kwebs-lafise/releases/tag/v0.2.2) · [Instalación y soporte profesional](https://y2kwebs.com/) · [Reportar un problema](https://github.com/Y2KWebs/y2kwebs-lafise/issues/new/choose)
+[WordPress.org: última versión publicada](https://wordpress.org/plugins/y2kwebs-lafise/) · [Releases en GitHub](https://github.com/Y2KWebs/y2kwebs-lafise/releases) · [Instalación y soporte profesional](https://y2kwebs.com/) · [Reportar un problema](https://github.com/Y2KWebs/y2kwebs-lafise/issues/new/choose)
 
-**Versión 0.2.2 — interfaz bilingüe.** Incluye español para cualquier variante española de WordPress e inglés como idioma fuente. Las traducciones regionales disponibles tienen prioridad. El administrador usa su idioma de usuario y la compra el de la tienda; los títulos personalizados se conservan. La validación comunitaria de las traducciones del directorio se gestiona por separado y no condiciona el español incluido.
+**Versión 0.2.3 — mejoras de compatibilidad 3DS.** Acepta variantes de mayúsculas de los campos de continuación 3DS y conserva diagnósticos seguros ante consultas inconclusas. Rechaza campos ambiguos y mantiene las comprobaciones financieras.
 
-Pasarela funcional con pagos reales comprobados en WooCommerce. Con 0.2.1 se verificó un pago de USD 1 con desafío 3DS manual completado por el titular, pedido pagado e intento aprobado. Las regresiones de 0.2.2 utilizan un banco simulado; quedan escenarios específicos por ampliar, según los [resultados y limitaciones](docs/validation.md). Es un desarrollo independiente, no un plugin oficial de LAFISE; no se afirma una alianza ni respaldo del banco.
+**Interfaz bilingüe.** Incluye español para cualquier variante española de WordPress e inglés como idioma fuente. Las traducciones regionales disponibles tienen prioridad. El administrador usa su idioma de usuario y la compra el de la tienda; los títulos personalizados se conservan. La validación comunitaria de las traducciones del directorio se gestiona por separado y no condiciona el español incluido.
+
+Pasarela funcional con pagos reales comprobados en WooCommerce. Con 0.2.1 se verificó un pago de USD 1 con desafío 3DS manual completado por el titular, pedido pagado e intento aprobado. Las regresiones de 0.2.3 utilizan un banco simulado; quedan escenarios específicos por ampliar, según los [resultados y limitaciones](docs/validation.md). Es un desarrollo independiente, no un plugin oficial de LAFISE; no se afirma una alianza ni respaldo del banco.
 
 ## Funcionalidades
 

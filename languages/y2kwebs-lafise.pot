@@ -127,19 +127,19 @@ msgstr ""
 msgid "LAFISE payment"
 msgstr ""
 
-#: src/Payments.php:173
+#: src/Payments.php:187
 msgid "LAFISE payment confirmed."
 msgstr ""
 
-#: src/Payments.php:182
+#: src/Payments.php:196
 msgid "LAFISE: authentication was not completed; you can try the payment again."
 msgstr ""
 
-#: src/Payments.php:183
+#: src/Payments.php:197
 msgid "LAFISE: payment declined."
 msgstr ""
 
-#: src/Payments.php:177
+#: src/Payments.php:191
 msgid "LAFISE: result pending review. Do not repeat the charge."
 msgstr ""
 

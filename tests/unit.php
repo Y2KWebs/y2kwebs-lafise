@@ -113,6 +113,76 @@ foreach (['59', '96', '06'] as $code) {
 $directDecline = $sale;
 $directDecline['ResponseCode'] = '59';
 check($protocol->validate('sale', $directDecline, $ctx)['state'] === 'unknown', 'Sale decline remains unclassified');
+foreach ([['Action', 'Creq', 'ThreeDSSessionData'], ['action', 'creq', 'threeDSSessionData'],
+    ['action', 'creq', 'threedssessiondata'], ['ACTION', 'CREQ', 'THREEDSSESSIONDATA']] as $names) {
+    $variant = $challenge;
+    $variant['ExtraFile'] = array_combine($names, array_values($challenge['ExtraFile']));
+    $result = $protocol->validate('sale', $variant, $ctx, [], true);
+    check($result['state'] === 'challenge' && $result['action']['fields'] === $action['fields']
+        && $result['action']['action'] === $challenge['ExtraFile']['Action'], 'Sale casing variants preserve exact values');
+    $continuation = ['ResponseCode' => '3DS-PRC-002'] + $variant['ExtraFile'];
+    check($protocol->validate('process', $continuation, $ctx, ['transaction_id' => $id, 'receipt' => ['bank_reference' => 'TEST']], true)['state'] === 'challenge',
+        'Process3DS JSON accepts only 3DS leaf casing variants');
+    rejects(fn () => $protocol->validate('process', $continuation, $ctx, ['transaction_id' => $id, 'receipt' => ['bank_reference' => 'TEST']]), 'Process continuation requires authenticated transport');
+}
+$fp = $challenge;
+$fp['ResponseCode'] = '3DS-PRC-001';
+$fp['ApiSecurity']['Message_signature'] = hash('sha256', $ctx['merchant_pay_id'] . '100' . '1234567890' . '0' . 'USD');
+$fp['ExtraFile'] = ['threeDSMethodURL' => 'https://issuer.bank.com/method', 'threeDSMethodData' => $encode(['threeDSServerTransID' => $id])];
+foreach ([['threeDSMethodURL', 'threeDSMethodData'], ['threedsmethodurl', 'threedsmethoddata'], ['THREEDSMETHODURL', 'THREEDSMETHODDATA']] as $names) {
+    $variant = $fp;
+    $variant['ExtraFile'] = array_combine($names, array_values($fp['ExtraFile']));
+    $result = $protocol->validate('sale', $variant, $ctx, [], true);
+    check($result['state'] === 'fingerprint' && $result['action']['fields']['threeDSMethodData'] === $fp['ExtraFile']['threeDSMethodData'], 'Fingerprint preserves base64 bytes across field names');
+}
+$invalidFields = [
+    ['Action', 'http://127.0.0.1/acs', 'invalid_destination'], ['Action', ['not a URL'], 'invalid_destination'],
+    ['Creq', 'NOT VALID', 'invalid_creq'], ['Creq', null, 'invalid_creq'], ['Creq', str_repeat('a', 16385), 'invalid_creq'],
+    ['ThreeDSSessionData', 'NOT VALID', 'invalid_session_data'], ['ThreeDSSessionData', null, 'invalid_session_data'],
+    ['ThreeDSSessionData', $encode('not-a-uuid'), 'invalid_transaction_id'],
+    ['Creq', $encode(['threeDSServerTransID' => '00000000-0000-4000-8000-000000000002']), 'challenge_identifier_mismatch'],
+    ['ThreeDSSessionData', $encode('00000000-0000-4000-8000-000000000002'), 'challenge_identifier_mismatch'],
+];
+foreach ($invalidFields as [$field, $value, $reason]) {
+    $bad = $challenge;
+    $bad['ExtraFile'][$field] = $value;
+    $bad['PAN'] = 'SYNTHETIC-MUST-NOT-RETAIN';
+    $bad['ExtraFile']['Unrelated'] = 'SYNTHETIC-MUST-NOT-RETAIN';
+    $result = $protocol->validate('sale', $bad, $ctx, [], true);
+    check($result === ['state' => 'declined', 'reason' => 'authentication_setup_failed', 'diagnostic' => ['three_ds_failure' => $reason]], 'Specific safe setup reason: ' . $reason);
+    check(!str_contains(json_encode($result), 'SYNTHETIC-MUST-NOT-RETAIN') && !isset($result['action']), 'Malformed continuation body not retained');
+    $bad['AuthorizationCode'] = 'TESTAUTH';
+    rejects(fn () => $protocol->validate('sale', $bad, $ctx, [], true), 'Authorization prevents retry on invalid continuation');
+}
+foreach (['Action' => 'action', 'Creq' => 'creq', 'ThreeDSSessionData' => 'threeDSSessionData'] as $name => $alias) {
+    foreach ([true, false] as $sameValue) {
+        $bad = $challenge;
+        $bad['ExtraFile'][$alias] = $sameValue ? $bad['ExtraFile'][$name] : 'OTHER';
+        check($protocol->validate('sale', $bad, $ctx, [], true)['diagnostic']['three_ds_failure'] === 'ambiguous_fields', 'Duplicate 3DS names rejected even with equal values');
+        $badProcess = ['ResponseCode' => '3DS-PRC-002'] + $bad['ExtraFile'];
+        rejects(fn () => $protocol->validate('process', $badProcess, $ctx, ['transaction_id' => $id, 'receipt' => ['bank_reference' => 'TEST']], true), 'Ambiguous Process3DS JSON rejected');
+    }
+}
+foreach (['threeDSMethodURL', 'threeDSMethodData'] as $name) {
+    $bad = $fp; $bad['ExtraFile'][strtoupper($name)] = $bad['ExtraFile'][$name];
+    check($protocol->validate('sale', $bad, $ctx, [], true)['diagnostic']['three_ds_failure'] === 'ambiguous_fields', 'Ambiguous fingerprint field rejected');
+}
+$bad = $challenge;
+$bad['ExtraFile'] = ['action' => $challenge['ExtraFile']['Action'], 'creq' => $challenge['ExtraFile']['Creq'], 'threeDSSessionData' => $challenge['ExtraFile']['ThreeDSSessionData']];
+$bad['ApiSecurity']['Message_signature'] = str_repeat('0', 64);
+rejects(fn () => $protocol->validate('sale', $bad, $ctx, [], true), 'Casing never bypasses financial signature');
+$bad = $challenge; $bad['ExtraFile']['action'] = $bad['ExtraFile']['Action']; $bad['PaymentData']['Amount'] = '101';
+rejects(fn () => $protocol->validate('sale', $bad, $ctx, [], true), 'Financial validation precedes 3DS ambiguity handling');
+$bad = $challenge; $bad['extraFile'] = $bad['ExtraFile']; unset($bad['ExtraFile']);
+check($protocol->validate('sale', $bad, $ctx, [], true)['state'] === 'declined', 'Parent container casing is not normalized');
+$bad = $challenge; $bad['PaymentData']['amount'] = $bad['PaymentData']['Amount']; unset($bad['PaymentData']['Amount']);
+rejects(fn () => $protocol->validate('sale', $bad, $ctx, [], true), 'Financial field casing remains exact');
+rejects(fn () => ThreeDS::callback(['CRES' => $encode(['threeDSServerTransID' => $id]), 'THREEDSSESSIONDATA' => $encode($id)], 'challenge', $id), 'Callback POST field names remain exact');
+check(ThreeDS::failure(new RuntimeException('Unsafe issuer destination.')) === null
+    && ThreeDS::failure(new DomainException('SYNTHETIC-MUST-NOT-RETAIN')) === null, 'Failure mapping never copies arbitrary exception text');
+$bad = $fp; $bad['ExtraFile']['threeDSMethodData'] = 'NOT VALID';
+check($protocol->validate('sale', $bad, $ctx, [], true)['diagnostic']['three_ds_failure'] === 'invalid_method_data', 'Invalid fingerprint data distinguished');
+
 $html = '<form method="POST" action="https://issuer.bank.com/acs"><input name="creq" value="abc"><input name="threeDSSessionData" value="def"></form>';
 check(Bank::continuation($html)['Creq'] === 'abc', 'Parse bank HTML without execution');
 rejects(fn () => Bank::continuation($html.$html), 'Ambiguous forms');

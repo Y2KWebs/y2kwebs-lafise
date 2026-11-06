@@ -9,6 +9,7 @@ define('Y2K_LAFISE_PRIVATE', ['username' => 'fixture', 'password' => 'fixture-no
     'merchant_pay_id' => 'fixture-key', 'merchant_id' => 'TESTM', 'terminal_id' => 'TESTT']);
 function get_option($key, $default = false) { return $default; }
 function wp_json_encode($value) { return json_encode($value); }
+function wp_parse_url(string $url): array|false { return parse_url($url); }
 final class WP_Error { public function __construct(public string $code, public string $message) {} }
 function is_wp_error($value): bool { return $value instanceof WP_Error; }
 function wp_remote_retrieve_response_code($value): int { return $value['response']['code']; }
@@ -132,4 +133,34 @@ $response = $respond(200, $final);
 $result = $bank->execute('process', $context + ['three_ds_data' => '', 'cres' => '', 'session_data' => ''], [], $auth);
 $assert($result['state'] === 'unknown' && $result['diagnostic']['failure'] === 'decline_authorization_conflict', 'Contradictory decline is a safe fixed diagnostic');
 $assert(!str_contains(json_encode($result), $privateMarker) && !str_contains(json_encode($result), 'CONTRADICTORY'), 'Conflict diagnostic excludes arbitrary response and authorization');
+$encode = static fn ($value) => rtrim(strtr(base64_encode(is_array($value) ? json_encode($value) : $value), '+/', '-_'), '=');
+$id = '00000000-0000-4000-8000-000000000001';
+$challenge = ['ResponseCode' => '3DS-PRC-002', 'PaymentData' => ['Amount' => '100', 'Currency_code' => 'USD',
+    'Merchant_Id' => 'TESTM', 'Terminal_Id' => 'TESTT', 'Ref_1' => null, 'Ref_3' => ''], 'AuthorizationCode' => '',
+    'ApiSecurity' => ['Message_signature' => hash('sha256', 'fixture-key' . '3DS-PRC-002' . '100' . 'TESTM' . '0' . 'USD')],
+    'ExtraFile' => ['action' => 'https://issuer.bank.com/acs', 'creq' => $encode(['threeDSServerTransID' => $id]), 'threeDSSessionData' => $encode($id)]];
+$response = $respond(200, $challenge);
+$validChallenge = $bank->execute('sale', $context, [], $auth);
+$assert($validChallenge['state'] === 'challenge' && $validChallenge['action']['fields']['creq'] === $challenge['ExtraFile']['creq'], 'Bank transport accepts camelCase fields without changing their values');
+foreach (['action' => 'http://127.0.0.1/acs', 'creq' => 'NOT VALID', 'threeDSSessionData' => 'NOT VALID', 'ACTION' => $challenge['ExtraFile']['action']] as $field => $value) {
+    $bad = $challenge; $bad['ExtraFile'][$field] = $value; $bad['PAN'] = $privateMarker;
+    $response = $respond(200, $bad);
+    $result = $bank->execute('sale', $context, [], $auth);
+    $expected = ['action' => 'invalid_destination', 'creq' => 'invalid_creq', 'threeDSSessionData' => 'invalid_session_data', 'ACTION' => 'ambiguous_fields'][$field];
+    $assert($result['state'] === 'declined' && $result['reason'] === 'authentication_setup_failed'
+        && $result['diagnostic']['three_ds_failure'] === $expected, 'Bank persists fixed 3DS setup diagnostic');
+    $assert($result['diagnostic']['stage'] === 'validation' && $result['diagnostic']['response_code'] === '3DS-PRC-002'
+        && !str_contains(json_encode($result), $privateMarker) && !isset($result['action']), 'Safe 3DS diagnostic retains context without bank body');
+    $continuation = ['ResponseCode' => '3DS-PRC-002'] + $bad['ExtraFile'];
+    $response = $respond(200, $continuation);
+    $result = $bank->execute('process', $context + ['three_ds_data' => '', 'cres' => 'synthetic', 'session_data' => ''], $validChallenge, $auth);
+    $assert($result['state'] === 'unknown' && $result['diagnostic']['three_ds_failure'] === $expected && !isset($result['action']), 'Submitted Process3DS never becomes a retryable setup failure');
+}
+$bad = $challenge; $bad['ApiSecurity']['Message_signature'] = str_repeat('0', 64);
+$response = $respond(200, $bad);
+$result = $bank->execute('sale', $context, [], $auth);
+$assert($result['state'] === 'unknown' && $result['diagnostic']['failure'] === 'signature_mismatch' && !isset($result['diagnostic']['three_ds_failure']), 'Invalid signature is not misclassified as a 3DS setup failure');
+$response = $respond(200, ['ResponseCode' => '3DS-PRC-002'] + $challenge['ExtraFile']);
+$result = $bank->execute('process', $context + ['three_ds_data' => '', 'cres' => 'synthetic', 'session_data' => ''], [], $auth);
+$assert($result['state'] === 'unknown' && $result['diagnostic']['three_ds_failure'] === 'invalid_continuation', 'Missing trusted continuation context gets only a fixed diagnostic');
 echo "OK: $checks bank diagnostic assertions\n";
