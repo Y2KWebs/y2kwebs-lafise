@@ -186,4 +186,53 @@ check($protocol->validate('sale', $bad, $ctx, [], true)['diagnostic']['three_ds_
 $html = '<form method="POST" action="https://issuer.bank.com/acs"><input name="creq" value="abc"><input name="threeDSSessionData" value="def"></form>';
 check(Bank::continuation($html)['Creq'] === 'abc', 'Parse bank HTML without execution');
 rejects(fn () => Bank::continuation($html.$html), 'Ambiguous forms');
+$failureContext = $ctx + ['attempt_state' => 'processing', 'order_unpaid' => true];
+$failurePayload = ['ResponseCode' => '3DS-RES-003', 'ResponseMessage' => 'SYNTHETIC-PRIVATE', 'PAN' => 'SYNTHETIC-PRIVATE', 'CVV' => 'SYNTHETIC-PRIVATE'];
+$trusted = $protocol->validate('sale', $challenge, $ctx, [], true);
+$trusted['three_ds_context']['submitted'] = true;
+$failure = $protocol->validate('process', $failurePayload, $failureContext, $trusted, true);
+check($failure['state'] === 'declined' && $failure['reason'] === 'authentication_failed'
+    && !str_contains(json_encode($failure), 'SYNTHETIC-PRIVATE') && !isset($failure['receipt']), 'Bound authentication rejection excludes the bank body');
+rejects(fn () => $protocol->validate('process', $failurePayload, $failureContext, $trusted), 'Receipt-free rejection requires authenticated transport');
+rejects(fn () => $protocol->validate('sale', $failurePayload, $failureContext, $trusted, true), 'Receipt-free rejection is not a Sale decline');
+rejects(fn () => $protocol->validate('process', $failurePayload, $failureContext, [], true), 'Old or missing context cannot classify a rejection');
+foreach ([['stage', 'invalid'], ['transaction_id', 'different'], ['reference', 'OTHER'], ['code', '00'],
+    ['source_operation', 'inquire'], ['receipt_hash', 'different'], ['submitted', false]] as [$key, $value]) {
+    $badPrior = $trusted; $badPrior['three_ds_context'][$key] = $value;
+    rejects(fn () => $protocol->validate('process', $failurePayload, $failureContext, $badPrior, true), 'Rejection context binding: ' . $key);
+}
+foreach (['sending', 'approved', 'declined', 'challenge'] as $state) {
+    $badContext = $failureContext; $badContext['attempt_state'] = $state;
+    rejects(fn () => $protocol->validate('process', $failurePayload, $badContext, $trusted, true), 'Wrong submitting state: ' . $state);
+}
+$badContext = $failureContext; $badContext['order_unpaid'] = false;
+rejects(fn () => $protocol->validate('process', $failurePayload, $badContext, $trusted, true), 'Paid order cannot become retryable');
+foreach (['amount' => '101', 'merchant' => 'OTHER', 'terminal' => 'OTHER', 'currency' => 'CRC', 'code' => '00', 'authorization' => 'AUTH', 'bank_reference' => 'BANK'] as $key => $value) {
+    $badPrior = $trusted; $badPrior['receipt'][$key] = $value;
+    // Recompute the binding too, to test the underlying financial validation independently.
+    $badPrior['three_ds_context']['receipt_hash'] = hash('sha256', json_encode($badPrior['receipt'], JSON_THROW_ON_ERROR));
+    rejects(fn () => $protocol->validate('process', $failurePayload, $failureContext, $badPrior, true), 'Prior financial mismatch: ' . $key);
+}
+foreach (['authorization', 'authorization_code', 'provider_reference', 'bank_reference'] as $key) {
+    $badPrior = $trusted; $badPrior[$key] = 'CONTRADICTION';
+    rejects(fn () => $protocol->validate('process', $failurePayload, $failureContext, $badPrior, true), 'Saved financial evidence: ' . $key);
+}
+foreach ([['AuthorizationCode' => 'AUTH'], ['AUTHORIZATION' => 'AUTH'], ['ExtraFile' => ['AuthorizationCode' => 'AUTH']],
+    ['PaymentInformation' => ['Amount' => '1.00']], ['paymentdata' => ['amount' => '1.00']], ['PaymentInformation' => 'invalid'],
+    ['ApiSecurity' => ['Message_signature' => 'signature']], ['ExtraFile' => ['SIGNATURE' => 'signature']],
+    ['Code' => '00'], ['responseCode' => '00'], ['PaymentData' => ['Amount' => 0]], ['PaymentData' => ['Amount' => false]],
+    ['ExtraFile' => ['AuthorizationCode' => []]], ['PaymentInformation' => []]] as $extra) {
+    rejects(fn () => $protocol->validate('process', $failurePayload + $extra, $failureContext, $trusted, true), 'Financial evidence never uses receipt-free path');
+}
+check($protocol->validate('process', $failurePayload + ['PaymentInformation' => ['AuthorizationCode' => null, 'Amount' => '']], $failureContext, $trusted, true)['state'] === 'declined', 'Only null or empty financial values are allowed');
+rejects(fn () => $protocol->validate('process', ['ResponseCode' => '3DS-INV-003'], $failureContext, $trusted, true), 'Unknown authentication code remains uncertain');
+$fingerprintPrior = $protocol->validate('sale', $fp, $ctx, [], true);
+$fingerprintPrior['three_ds_context']['submitted'] = true;
+check($protocol->validate('process', $failurePayload, $failureContext, $fingerprintPrior, true)['reason'] === 'authentication_failed', 'Fingerprint rejection is correlated');
+$nextChallenge = $protocol->validate('process', ['ResponseCode' => '3DS-PRC-002', 'Action' => 'https://issuer.bank.com/acs',
+    'Creq' => $encode(['threeDSServerTransID' => $id]), 'ThreeDSSessionData' => $encode($id)], $ctx, $fingerprintPrior, true);
+check($nextChallenge['three_ds_context']['submitted'] === false && $nextChallenge['three_ds_context']['code'] === '3DS-PRC-002', 'New challenge resets the per-stage submission marker');
+$nextChallenge['three_ds_context']['submitted'] = true;
+check($protocol->validate('process', $failurePayload, $failureContext, $nextChallenge, true)['reason'] === 'authentication_failed', 'Fingerprint to challenge rejection retains original receipt binding');
+
 echo "OK: $count unit assertions\n";

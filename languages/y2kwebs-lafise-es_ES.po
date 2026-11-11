@@ -2,7 +2,7 @@
 # Copyright (C) 2026 Y2KWebs
 # This file is distributed under the GPL-2.0-or-later license.
 msgid ""
-msgstr "Project-Id-Version: Y2KWebs Gateway for LAFISE 0.2.3\nReport-Msgid-Bugs-To: https://github.com/Y2KWebs/y2kwebs-lafise/issues\nLanguage: es_ES\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\nPlural-Forms: nplurals=2; plural=(n != 1);\nX-Domain: y2kwebs-lafise\n"
+msgstr "Project-Id-Version: Y2KWebs Gateway for LAFISE 0.2.4\nReport-Msgid-Bugs-To: https://github.com/Y2KWebs/y2kwebs-lafise/issues\nLanguage: es_ES\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\nPlural-Forms: nplurals=2; plural=(n != 1);\nX-Domain: y2kwebs-lafise\n"
 
 msgid "Accept card payments through LAFISE Costa Rica. Enter your merchant credentials and check the connection."
 msgstr "Acepta pagos con tarjeta mediante LAFISE Costa Rica. Introduce las credenciales de tu comercio y comprueba la conexión."

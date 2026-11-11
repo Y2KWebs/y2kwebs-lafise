@@ -4,7 +4,7 @@ Tags: woocommerce, payments, costa-rica, lafise
 Requires at least: 6.9
 Tested up to: 7.1
 Requires PHP: 8.2
-Stable tag: 0.2.3
+Stable tag: 0.2.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
@@ -103,6 +103,13 @@ Password and API KEY are stored encrypted and are not displayed when reopening s
 
 == Changelog ==
 
+= 0.2.4 =
+
+* Recognize authenticated, context-bound 3DS authentication rejection 3DS-RES-003 without treating uncertain financial results as safe to retry.
+* Expire unanswered fingerprints after 60 seconds while retaining ten minutes for manual challenges.
+* Preserve fixed timeout diagnostics and prevent retries when financial or submission evidence requires review.
+* Preserve deadlines of existing attempts and keep prior payment safeguards.
+
 = 0.2.3 =
 
 * Accept unambiguous casing variants of 3DS continuation fields while keeping financial fields, signatures and callback names exact.
@@ -130,6 +137,9 @@ Password and API KEY are stored encrypted and are not displayed when reopening s
 * Added normal checkout and optional restricted testing mode, authenticated 3DS destinations and safe authentication retries.
 
 == Upgrade Notice ==
+
+= 0.2.4 =
+Improves authentication failure recovery and stalled fingerprint handling. Uncertain financial results remain blocked for review; existing attempt deadlines are preserved.
 
 = 0.2.3 =
 Improves compatibility with bank 3DS field names and preserves safe authentication failure diagnostics. Existing merchant settings and payment safeguards are preserved.

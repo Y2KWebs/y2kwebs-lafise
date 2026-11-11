@@ -21,7 +21,7 @@ async function render(result, fail = false) {
 }
 
 test('verification renders every server-translated status and safe retry label', async () => {
-  for (const [state, reason, key] of [['declined', 'authentication_expired', 'authenticationIncomplete'], ['declined', 'bank_declined', 'declined'], ['unknown', '', 'pending'], ['challenge', '', 'challenge'], ['sending', '', 'checking']]) {
+  for (const [state, reason, key] of [['declined', 'authentication_expired', 'authenticationIncomplete'], ['declined', 'authentication_failed', 'authenticationIncomplete'], ['declined', 'bank_declined', 'declined'], ['unknown', '', 'pending'], ['challenge', '', 'challenge'], ['sending', '', 'checking']]) {
     const actual = await render({ state, reason, retry: state === 'declined' ? '/retry' : null });
     assert.equal(actual.message, messages[key]);
     if (state === 'declined') assert.equal(actual.children[0].textContent, messages.retry);

@@ -23,7 +23,7 @@
             }
             if (['unknown', 'declined'].includes(result.state) || Date.now() - started > 1800000) {
                 stopped = true; frame.hidden = true;
-                message.textContent = result.state === 'declined' ? (['authentication_expired','authentication_setup_failed','payment_not_sent'].includes(result.reason)
+                message.textContent = result.state === 'declined' ? (['authentication_expired','authentication_failed','authentication_setup_failed','payment_not_sent'].includes(result.reason)
                     ? messages.authenticationIncomplete : messages.declined)
                     : messages.pending;
                 if (result.retry) {

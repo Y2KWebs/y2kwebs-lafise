@@ -120,6 +120,9 @@ final class Bank
             if (isset($result['diagnostic']['three_ds_failure'])) {
                 $result['diagnostic'] = array_merge($this->diagnostic, ['failure' => 'authentication_setup_failed'], $result['diagnostic']);
             }
+            if (($result['reason'] ?? '') === 'authentication_failed') {
+                $result['diagnostic'] = $this->diagnostic + ['failure' => 'authentication_failed'];
+            }
             if ($result['state'] === 'unknown') {
                 return $result + ['reason' => 'unrecognized_bank_result', 'diagnostic' => $this->diagnostic + ['failure' => 'unrecognized_result']];
             }

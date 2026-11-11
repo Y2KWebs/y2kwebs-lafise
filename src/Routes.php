@@ -86,6 +86,7 @@ final class Routes
                 wp_send_json($payments->status($reference, $token));
             }
             if ($action === 'verify') {
+                $payments->status($reference, $token);
                 $body = '<main class="y2k-verify" data-status-url="' . esc_url(Payments::url('status', $a)) . '" data-messages="'
                     . esc_attr(wp_json_encode(Languages::verification())) . '">'
                     . '<h1>' . esc_html__('Payment confirmation', 'y2kwebs-lafise') . '</h1>'

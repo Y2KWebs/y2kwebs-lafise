@@ -24,10 +24,12 @@ $pem = openssl_pkey_get_details($key)['key'];
 $calls = [];
 $mode = 'fingerprint';
 $completed = 0;
+$activeReference = null;
+$submissionProofs = [];
 add_action('woocommerce_payment_complete', static function () use (&$completed): void { $completed++; });
 $id = '00000000-0000-4000-8000-000000000001';
 $encode = static fn ($v) => rtrim(strtr(base64_encode(is_array($v) ? json_encode($v) : $v), '+/', '-_'), '=');
-$http = static function ($pre, $args, $url) use (&$calls, &$mode, $pem, $id, $encode) {
+$http = static function ($pre, $args, $url) use (&$calls, &$mode, $pem, $id, $encode, &$activeReference, &$submissionProofs) {
     $operation = basename(parse_url($url, PHP_URL_PATH));
     $calls[] = $operation;
     if (!str_starts_with($url, 'https://lafise-cr.portalpos.com/Interfaces/')) {
@@ -52,10 +54,17 @@ $http = static function ($pre, $args, $url) use (&$calls, &$mode, $pem, $id, $en
             if ($mode === 'direct-setup-bad') { $body['ExtraFile']['Creq'] = 'NOT VALID'; }
         }
     } elseif ($operation === 'Process3DS') {
+        if ($activeReference) {
+            $persisted = (new Store())->find($activeReference);
+            $submissionProofs[] = $persisted['state'] === 'processing' && ($persisted['data']['three_ds_context']['submitted'] ?? false) === true;
+        }
         $request = json_decode($args['body'], true);
-        if ($mode === 'fingerprint-challenge' && !empty($request['threeDSData'])) {
+        if (in_array($mode, ['fingerprint-challenge', 'fingerprint-challenge-auth-failure'], true) && !empty($request['threeDSData'])) {
             $body = ['ResponseCode' => '3DS-PRC-002', 'ACTION' => 'https://issuer.bank.com/acs',
                 'CREQ' => $encode(['threeDSServerTransID' => $id]), 'THREEDSSESSIONDATA' => $encode($id)];
+        } elseif (in_array($mode, ['auth-failure-fingerprint', 'direct-auth-failure', 'fingerprint-challenge-auth-failure', 'direct-auth-conflict'], true)) {
+            $body = ['ResponseCode' => '3DS-RES-003', 'ResponseMessage' => 'SYNTHETIC-PRIVATE-BODY', 'PAN' => 'SYNTHETIC-PRIVATE-BODY'];
+            if ($mode === 'direct-auth-conflict') { $body['paymentinformation'] = ['AuthorizationCode' => 'CONFLICT']; }
         } elseif ($mode === 'direct-process-bad') {
             $body = ['ResponseCode' => '3DS-PRC-002', 'action' => 'https://issuer.bank.com/acs', 'creq' => 'NOT VALID',
                 'threeDSSessionData' => $encode($id), 'Unrelated' => 'SYNTHETIC-PRIVATE-BODY'];
@@ -287,6 +296,111 @@ try {
     $check($after['state'] === 'approved' && !isset($after['data']['reason']) && !isset($after['data']['diagnostic']), 'Verified query approval clears obsolete active failure');
     $check(wc_get_order($uncertainOrder->get_id())->is_paid() && $completed === $beforeCompleted + 1, 'Query approval completes order once');
     $check(count(array_filter($calls, fn ($c) => in_array($c, ['Sale', 'Process3DS'], true))) === $beforeCalls, 'Recovery never resends Sale or Process3DS');
+    foreach (['auth-failure-fingerprint', 'direct-auth-failure', 'fingerprint-challenge-auth-failure', 'direct-auth-conflict'] as $mode) {
+        $authOrder = $create();
+        $stock = wc_get_product($product->get_id())->get_stock_quantity();
+        $beforeCompleted = $completed;
+        $authAttempt = $service->start($authOrder, $input());
+        $stockAfterStart = wc_get_product($product->get_id())->get_stock_quantity();
+        $activeReference = $authAttempt['reference'];
+        $return = $authAttempt['state'] === 'fingerprint' ? $callback : $challengeCallback;
+        $service->callback($authAttempt['reference'], $authAttempt['data']['token'], $return);
+        if ($mode === 'fingerprint-challenge-auth-failure') {
+            $nextStage = $store->find($authAttempt['reference']);
+            $check($nextStage['state'] === 'challenge' && $nextStage['data']['three_ds_context']['submitted'] === false, 'Continuation opens a fresh unsubmitted challenge');
+            $return = $challengeCallback;
+            $service->callback($authAttempt['reference'], $authAttempt['data']['token'], $return);
+        }
+        $activeReference = null;
+        $after = $store->find($authAttempt['reference']);
+        $status = $service->status($after['reference'], $after['data']['token']);
+        $safe = $mode !== 'direct-auth-conflict';
+        $check($status['state'] === ($safe ? 'declined' : 'unknown') && ($status['retry'] !== null) === $safe, 'Only proven authentication failure allows retry: ' . $mode);
+        if ($safe) {
+            $check($after['data']['reason'] === 'authentication_failed' && $after['data']['diagnostic']['response_code'] === '3DS-RES-003', 'Safe authentication failure reason and bank code persisted');
+            $check(wc_get_order($authOrder->get_id())->get_status() === 'failed', 'Authentication failure marks WooCommerce order failed');
+        }
+        $check(!str_contains(wp_json_encode($after), 'SYNTHETIC-PRIVATE-BODY'), 'Authentication failure never stores bank body');
+        $check(!wc_get_order($authOrder->get_id())->is_paid() && $completed === $beforeCompleted, 'Authentication failure never confirms payment: ' . $mode);
+        $check(wc_get_product($product->get_id())->get_stock_quantity() === $stockAfterStart, 'Authentication failure does not reduce stock again: ' . $mode);
+        $beforeCalls = count($calls);
+        $service->callback($after['reference'], $after['data']['token'], $return);
+        $service->reconcile($after['reference']);
+        $check(count($calls) === $beforeCalls, 'Repeated callback and reconciliation never repeat authentication submission');
+        $sales = count(array_filter($calls, fn ($c) => $c === 'Sale'));
+        if ($safe) {
+            $newAttempt = $service->start(wc_get_order($authOrder->get_id()), $input());
+            $check($newAttempt['reference'] !== $after['reference'], 'Explicit retry creates a new attempt');
+        } else {
+            $service->start(wc_get_order($authOrder->get_id()), ['y2k_csrf' => Payments::csrf()]);
+        }
+        $check(count(array_filter($calls, fn ($c) => $c === 'Sale')) === $sales + ($safe ? 1 : 0), 'Uncertain authentication cannot resend Sale');
+    }
+    $check(count($submissionProofs) === 5 && !in_array(false, $submissionProofs, true), 'Every Process3DS is durably marked submitted before HTTP');
+
+    foreach (['status', 'callback', 'reconcile', 'start'] as $entry) {
+        $mode = 'fingerprint';
+        $timeoutOrder = $create();
+        $timeout = $service->start($timeoutOrder, $input());
+        $check($timeout['data']['auth_expires'] >= time() + 58 && $timeout['data']['auth_expires'] <= time() + 60, 'New fingerprint deadline is 60 seconds');
+        $check(wp_next_scheduled('y2k_lafise_reconcile', [$timeout['reference']]) === $timeout['data']['auth_expires'] + 1, 'Fingerprint deadline is not suppressed by the initial recovery event');
+        $data = $timeout['data']; $data['auth_expires'] = time() - 1;
+        $store->save($timeout, 'fingerprint', $data);
+        $beforeProcess = count(array_filter($calls, fn ($c) => $c === 'Process3DS'));
+        if ($entry === 'callback') { $service->callback($timeout['reference'], $data['token'], $callback); }
+        elseif ($entry === 'reconcile') { $service->reconcile($timeout['reference']); }
+        elseif ($entry === 'start') { $service->start(wc_get_order($timeoutOrder->get_id()), $input()); }
+        else { $service->status($timeout['reference'], $data['token']); }
+        $after = $store->find($timeout['reference']);
+        $check($after['state'] === 'declined' && $after['data']['reason'] === 'authentication_expired'
+            && $after['data']['diagnostic']['three_ds_failure'] === 'fingerprint_callback_timeout' && !isset($after['data']['action']), 'Fingerprint expires safely through ' . $entry);
+        $check(count(array_filter($calls, fn ($c) => $c === 'Process3DS')) === $beforeProcess, 'Expiry never sends Process3DS: ' . $entry);
+    }
+    $mode = 'direct-approved';
+    $challengeOrder = $create(); $waiting = $service->start($challengeOrder, $input());
+    $check($waiting['data']['auth_expires'] >= time() + 598 && $waiting['data']['auth_expires'] <= time() + 600, 'Manual challenge keeps ten-minute deadline');
+    $data = $waiting['data']; $data['auth_expires'] = time() + 539;
+    $store->save($waiting, 'challenge', $data);
+    $check($service->status($waiting['reference'], $data['token'])['state'] === 'challenge', 'Challenge remains active after 61 seconds');
+    $service->callback($waiting['reference'], $data['token'], $challengeCallback);
+    $check(wc_get_order($challengeOrder->get_id())->is_paid(), 'Challenge after 61 seconds can still complete');
+    $timeoutChallenge = $service->start($create(), $input());
+    $data = $timeoutChallenge['data']; $data['auth_expires'] = time() - 1;
+    $store->save($timeoutChallenge, 'challenge', $data);
+    $service->status($timeoutChallenge['reference'], $data['token']);
+    $check($store->find($timeoutChallenge['reference'])['data']['diagnostic']['three_ds_failure'] === 'challenge_callback_timeout', 'Challenge expiry records its distinct subtype');
+
+    foreach (['authorization', 'provider_reference', 'receipt_authorization', 'receipt_reference', 'submitted', 'paid'] as $evidence) {
+        $mode = 'fingerprint'; $guardOrder = $create(); $guard = $service->start($guardOrder, $input());
+        $data = $guard['data']; $data['auth_expires'] = time() - 1;
+        if ($evidence === 'submitted') { $data['three_ds_context']['submitted'] = true; }
+        elseif ($evidence === 'paid') { $guardOrder->payment_complete('SYNTHETIC'); }
+        elseif ($evidence === 'receipt_authorization') { $data['receipt']['authorization'] = 'CONFLICT'; }
+        elseif ($evidence === 'receipt_reference') { $data['receipt']['bank_reference'] = 'CONFLICT'; }
+        else { $data[$evidence] = 'CONFLICT'; }
+        $store->save($guard, 'fingerprint', $data);
+        $status = $service->status($guard['reference'], $data['token']);
+        $check($status['state'] === 'unknown' && $status['retry'] === null && $status['action'] === null, 'Financial or submitted evidence blocks expiry retry: ' . $evidence);
+        $beforeProcess = count(array_filter($calls, fn ($c) => $c === 'Process3DS'));
+        $service->callback($guard['reference'], $data['token'], $callback);
+        $check(count(array_filter($calls, fn ($c) => $c === 'Process3DS')) === $beforeProcess, 'Blocked expiry never submits late callback');
+    }
+    $mode = 'fingerprint'; $legacy = $service->start($create(), $input());
+    $data = $legacy['data']; unset($data['three_ds_context']); $data['auth_expires'] = time() + 500;
+    $store->save($legacy, 'fingerprint', $data);
+    $check($service->status($legacy['reference'], $data['token'])['state'] === 'fingerprint'
+        && $store->find($legacy['reference'])['data']['auth_expires'] === $data['auth_expires'], 'Legacy persisted deadline remains unchanged');
+    $mode = 'auth-failure-fingerprint';
+    $service->callback($legacy['reference'], $data['token'], $callback);
+    $check($service->status($legacy['reference'], $data['token'])['state'] === 'unknown', 'Legacy attempt without stage proof cannot classify bare rejection');
+
+    $mode = 'direct-auth-failure'; $paidOrder = $create(); $alreadyPaid = $service->start($paidOrder, $input());
+    $paidOrder->payment_complete('SYNTHETIC-EXTERNAL');
+    $beforeCalls = count($calls);
+    $service->callback($alreadyPaid['reference'], $alreadyPaid['data']['token'], $challengeCallback);
+    $check(count($calls) === $beforeCalls && $service->status($alreadyPaid['reference'], $alreadyPaid['data']['token'])['retry'] === null,
+        'Already paid order never submits a pending continuation or becomes retryable');
+
     echo 'PASS: '.$checks.' integration assertions; HPOS='.(get_option('woocommerce_custom_orders_table_enabled') ?: 'no').'; WordPress='.get_bloginfo('version').'; WooCommerce='.WC_VERSION.'; PHP='.PHP_VERSION."\n";
 } finally {
     remove_filter('pre_http_request',$http,10);

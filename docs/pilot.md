@@ -21,7 +21,8 @@ No hay un paso de aprobación/certificación en el plugin. Las comprobaciones si
 | Desafío directo desde Sale | Firma que incluye código y unidades menores; pago confirmado solo tras el resultado financiero final |
 | Process3DS con rechazo 59 | Rechazo validado sin autorización permite otro intento solicitado por el comprador; contradicciones o firma inválida permanecen en revisión |
 | Emisor nuevo | Destino recibido del transporte bancario autenticado; no listas mundiales de dominios |
-| Autenticación caducada sin siguiente envío | Cerrar intento y permitir otro pago del mismo pedido |
+| Autenticación caducada sin siguiente envío | Fingerprint: 60 segundos; desafío: 10 minutos. Solo sin evidencia financiera permite otro pago del mismo pedido |
+| Process3DS con 3DS-RES-003 | Solo un rechazo autenticado vinculado a la etapa enviada y sin datos financieros permite un nuevo intento; contradicciones permanecen en revisión |
 | Timeout tras envío financiero | Retener pedido y consultar; nunca repetir automáticamente |
 | CRC, USD e impuestos | Importes y terminal correspondientes, sin conversión de moneda |
 | Recargas y doble clic | Sin ventas ni confirmaciones duplicadas |

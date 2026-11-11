@@ -163,4 +163,21 @@ $assert($result['state'] === 'unknown' && $result['diagnostic']['failure'] === '
 $response = $respond(200, ['ResponseCode' => '3DS-PRC-002'] + $challenge['ExtraFile']);
 $result = $bank->execute('process', $context + ['three_ds_data' => '', 'cres' => 'synthetic', 'session_data' => ''], [], $auth);
 $assert($result['state'] === 'unknown' && $result['diagnostic']['three_ds_failure'] === 'invalid_continuation', 'Missing trusted continuation context gets only a fixed diagnostic');
+$prior = $validChallenge;
+$prior['three_ds_context']['submitted'] = true;
+$processContext = $context + ['attempt_state' => 'processing', 'order_unpaid' => true, 'three_ds_data' => '', 'cres' => 'synthetic', 'session_data' => 'synthetic'];
+$response = $respond(200, ['ResponseCode' => '3DS-RES-003', 'ResponseMessage' => $privateMarker, 'PAN' => $privateMarker, 'CVV' => $privateMarker]);
+$result = $bank->execute('process', $processContext, $prior, $auth);
+$assert($result['state'] === 'declined' && $result['reason'] === 'authentication_failed', 'Authenticated Process3DS rejection permits safe retry');
+$assert($result['diagnostic']['response_code'] === '3DS-RES-003' && $result['diagnostic']['failure'] === 'authentication_failed'
+    && !str_contains(json_encode($result), $privateMarker) && !isset($result['receipt']), 'Authentication rejection keeps controlled diagnostic only');
+foreach ([['AuthorizationCode' => 'CONFLICT'], ['paymentinformation' => ['Amount' => '1.00']], ['ExtraFile' => ['SIGNATURE' => 'CONFLICT']], ['Code' => '00']] as $extra) {
+    $response = $respond(200, ['ResponseCode' => '3DS-RES-003'] + $extra);
+    $result = $bank->execute('process', $processContext, $prior, $auth);
+    $assert($result['state'] === 'unknown' && !isset($result['action']), 'Contradictory authentication rejection stays unknown');
+}
+$response = $respond(200, ['ResponseCode' => '3DS-RES-003']);
+$result = $bank->execute('process', $processContext, [], $auth);
+$assert($result['state'] === 'unknown', 'Missing stage proof fails closed at the transport boundary');
+
 echo "OK: $checks bank diagnostic assertions\n";

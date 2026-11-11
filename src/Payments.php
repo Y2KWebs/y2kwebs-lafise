@@ -115,6 +115,10 @@ final class Payments
             if (!in_array($a['state'], ['fingerprint', 'challenge'], true) || $a['data']['expires'] < time()) {
                 return;
             }
+            if (!$this->context($a)['order_unpaid']) {
+                $this->apply($a, ['state' => 'unknown', 'reason' => 'manual_review_required']);
+                return;
+            }
             $fields = ThreeDS::callback($input, $a['state'], $a['data']['transaction_id']);
             $canonical = array_map(static fn ($v) => $v === '' ? '' : base64_encode(ThreeDS::decode($v)), $fields);
             $digest = hash('sha256', json_encode($canonical, JSON_THROW_ON_ERROR));
@@ -123,6 +127,7 @@ final class Payments
             }
             $data = $a['data'];
             $data['steps'][] = $digest;
+            if (isset($data['three_ds_context'])) { $data['three_ds_context']['submitted'] = true; }
             unset($data['action']);
             $a = $this->store->save($a, 'processing', $data);
             $result = (new Bank($this->config))->execute('process', $this->context($a) + $fields, $data);
@@ -138,7 +143,10 @@ final class Payments
             throw new \DomainException('Gateway account changed; manual review required.');
         }
         return ['amount' => (string) $d['amount'], 'tax' => (string) $d['tax'], 'currency' => $d['currency'],
-            'reference' => $a['reference'], 'ref3' => $d['ref3'] ?? ''];
+            'reference' => $a['reference'], 'ref3' => $d['ref3'] ?? '', 'attempt_state' => $a['state'],
+            'order_unpaid' => ($order = wc_get_order($a['order_id'])) && !$order->is_paid()
+                && $order->get_payment_method() === 'y2kwebs_lafise'
+                && Money::minor((string) $order->get_total()) === $d['amount'] && $order->get_currency() === $d['currency']];
     }
 
     private static function resultData(array $prior, array $result): array
@@ -163,12 +171,15 @@ final class Payments
         if (!in_array($state, ['fingerprint', 'challenge'], true)) {
             unset($data['action']);
         } else {
-            $data['auth_expires'] = min(time() + 600, $data['expires']);
+            $data['auth_expires'] = min(time() + ($state === 'fingerprint' ? 60 : 600), $data['expires']);
         }
         $a = $this->store->save($a, $state, $data);
         $this->syncOrder($a);
+        // Replace the initial recovery event; WordPress otherwise deduplicates the earlier fingerprint deadline.
+        wp_clear_scheduled_hook('y2k_lafise_reconcile', [$a['reference']]);
         if (in_array($state, ['unknown', 'fingerprint', 'challenge'], true)) {
-            wp_schedule_single_event($data['auth_expires'] ?? time() + 120, 'y2k_lafise_reconcile', [$a['reference']]);
+            wp_schedule_single_event(in_array($state, ['fingerprint', 'challenge'], true) ? $data['auth_expires'] + 1 : time() + 120,
+                'y2k_lafise_reconcile', [$a['reference']]);
         }
         return $a;
     }
@@ -192,7 +203,7 @@ final class Payments
             $order->save();
         } elseif ($a['state'] === 'declined' && !$order->is_paid()) {
             $reason = $a['data']['reason'] ?? '';
-            $order->update_status('failed', in_array($reason, ['authentication_expired','authentication_setup_failed','payment_not_sent'], true)
+            $order->update_status('failed', in_array($reason, ['authentication_expired','authentication_failed','authentication_setup_failed','payment_not_sent'], true)
                 ? __('LAFISE: authentication was not completed; you can try the payment again.', 'y2kwebs-lafise')
                 : __('LAFISE: payment declined.', 'y2kwebs-lafise'));
         }
@@ -273,8 +284,13 @@ final class Payments
         }
         $data = $a['data'];
         unset($data['action']);
-        $data['reason'] = 'authentication_expired';
-        $a = $this->store->save($a, 'declined', $data);
+        $order = wc_get_order($a['order_id']);
+        $blocked = !$order || $order->is_paid() || $order->get_payment_method() !== 'y2kwebs_lafise'
+            || Money::minor((string) $order->get_total()) !== $data['amount'] || $order->get_currency() !== $data['currency']
+            || Protocol::financialEvidence($data) || ($data['three_ds_context']['submitted'] ?? false) !== false;
+        $result = ['state' => $blocked ? 'unknown' : 'declined', 'reason' => $blocked ? 'manual_review_required' : 'authentication_expired',
+            'diagnostic' => ['three_ds_failure' => $a['state'] === 'fingerprint' ? 'fingerprint_callback_timeout' : 'challenge_callback_timeout']];
+        $a = $this->store->save($a, $result['state'], self::resultData($data, $result));
         $this->syncOrder($a);
         return $a;
     }
