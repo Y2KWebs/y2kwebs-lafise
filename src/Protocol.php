@@ -124,6 +124,9 @@ final class Protocol
             return ['state' => 'approved', 'receipt' => $prior['receipt'], 'ref3' => $prior['ref3']];
         }
         $schema = $this->definition[$operation]['response'];
+        if ($operation === 'process' && ($payload['ResponseCode'] ?? '') === '3DS-RES-003') {
+            return $this->authenticationFailure($payload, $context, $prior, $authenticatedTransport);
+        }
         if ($operation === 'process' && ($payload['ResponseCode'] ?? '') === '3DS-PRC-002') {
             if (!$authenticatedTransport || empty($prior['transaction_id']) || empty($prior['receipt'])) {
                 throw new \DomainException('Missing prior receipt.');
@@ -132,7 +135,8 @@ final class Protocol
             $action = ThreeDS::action('challenge', self::threeDsValue($payload, $map['action']),
                 ['creq' => self::threeDsValue($payload, $map['creq']), 'threeDSSessionData' => self::threeDsValue($payload, $map['session_data'])], $prior['transaction_id']);
             return ['state' => 'challenge', 'receipt' => $prior['receipt'], 'action' => $action,
-                'transaction_id' => $action['transaction_id'], 'ref3' => $prior['ref3'] ?? ''];
+                'transaction_id' => $action['transaction_id'], 'ref3' => $prior['ref3'] ?? '',
+                'three_ds_context' => self::stageContext('challenge', $action['transaction_id'], $context, $prior['receipt'], 'process')];
         }
         $data = [];
         foreach ($schema['paths'] as $name => $path) {
@@ -191,7 +195,76 @@ final class Protocol
             }
             $result['action'] = $action;
             $result['transaction_id'] = $action['transaction_id'];
+            $result['three_ds_context'] = self::stageContext($state, $action['transaction_id'], $context, $data, 'sale');
         }
         return $result;
+    }
+
+    /** Bind a validated stage to its local attempt and original signed receipt, without interactive fields. */
+    private static function stageContext(string $stage, string $id, array $context, array $receipt, string $source): array
+    {
+        return ['stage' => $stage, 'transaction_id' => $id, 'reference' => $context['reference'] ?? '',
+            'code' => $stage === 'fingerprint' ? '3DS-PRC-001' : '3DS-PRC-002', 'source_operation' => $source,
+            'receipt_hash' => hash('sha256', json_encode($receipt, JSON_THROW_ON_ERROR)), 'submitted' => false];
+    }
+
+    /** An authenticated, receipt-free authentication failure cannot classify any financial result. */
+    private function authenticationFailure(array $payload, array $context, array $prior, bool $authenticated): array
+    {
+        $operation = $this->definition['process'];
+        $step = $prior['three_ds_context'] ?? [];
+        $receipt = $prior['receipt'] ?? [];
+        $stage = $step['stage'] ?? '';
+        $id = $prior['transaction_id'] ?? '';
+        $source = $step['source_operation'] ?? '';
+        if (!$authenticated || ($operation['method'] ?? '') !== 'POST' || ($operation['authorization'] ?? '') !== 'bearer'
+            || ($operation['response']['kind'] ?? '') !== 'process_3ds'
+            || ($context['order_unpaid'] ?? false) !== true || !in_array($context['attempt_state'] ?? '', ['processing', 'unknown'], true)
+            || !in_array($stage, ['fingerprint', 'challenge'], true) || ($step['submitted'] ?? false) !== true
+            || !is_string($id) || !preg_match('/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/iD', $id)
+            || ($step['transaction_id'] ?? '') !== $id || empty($context['reference']) || ($step['reference'] ?? '') !== $context['reference']
+            || ($step['code'] ?? '') !== ($stage === 'fingerprint' ? '3DS-PRC-001' : '3DS-PRC-002')
+            || !in_array($source, ['sale', 'process'], true) || ($stage === 'fingerprint' && $source !== 'sale')
+            || !in_array($receipt['code'] ?? '', $source === 'sale' ? [$step['code'] ?? ''] : ['3DS-PRC-001', '3DS-PRC-002'], true)
+            || ($step['receipt_hash'] ?? '') !== hash('sha256', json_encode($receipt, JSON_THROW_ON_ERROR))
+            || ($receipt['merchant'] ?? null) !== $context['merchant_id'] || ($receipt['terminal'] ?? null) !== $context['terminal_id']
+            || ($receipt['currency'] ?? null) !== $context['currency'] || !is_string($receipt['amount'] ?? null)
+            || !preg_match('/^[0-9]{1,12}$/D', $receipt['amount']) || (int) $receipt['amount'] !== (int) $context['amount']
+            || self::financialEvidence($prior)) {
+            throw new \DomainException('Invalid authentication rejection context.');
+        }
+        // Inspect aliases only to reject contradictory evidence; accepted financial field names remain exact.
+        $scan = static function (array $fields, bool $financial = false) use (&$scan): void {
+            foreach ($fields as $key => $value) {
+                $name = strtolower((string) $key);
+                if ($name === 'responsecode' && $value !== '3DS-RES-003') {
+                    throw new \DomainException('Conflicting authentication rejection code.');
+                }
+                $container = in_array($name, ['paymentdata', 'paymentinformation', 'apisecurity'], true);
+                $sensitive = $financial || $container || in_array($name, ['authorizationcode', 'authorization', 'message_signature', 'signature', 'code',
+                    'amount', 'currency_code', 'currency', 'merchant_id', 'terminal_id', 'ref1', 'ref_1', 'ref3', 'ref_3', 'bank_reference',
+                    'authorization_code', 'provider_reference', 'providerreference', 'tax', 'taxes'], true);
+                if (is_array($value)) {
+                    if ($sensitive && $value === []) { throw new \DomainException('Authentication rejection contains financial data.'); }
+                    $scan($value, $sensitive);
+                } elseif ($sensitive && $value !== null && $value !== '') {
+                    throw new \DomainException('Authentication rejection contains financial data.');
+                }
+            }
+        };
+        $scan($payload);
+        return ['state' => 'declined', 'reason' => 'authentication_failed',
+            'diagnostic' => ['failure' => 'authentication_failed']];
+    }
+
+    public static function financialEvidence(array $data): bool
+    {
+        foreach (['authorization', 'authorization_code', 'provider_reference', 'bank_reference'] as $name) {
+            if (($data[$name] ?? '') !== '' && ($data[$name] ?? null) !== null) { return true; }
+        }
+        foreach (['authorization', 'bank_reference'] as $name) {
+            if (($data['receipt'][$name] ?? '') !== '' && ($data['receipt'][$name] ?? null) !== null) { return true; }
+        }
+        return false;
     }
 }

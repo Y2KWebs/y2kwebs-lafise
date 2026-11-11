@@ -1,6 +1,6 @@
 # Publicación en WordPress.org
 
-El plugin se distribuye en [WordPress.org](https://wordpress.org/plugins/y2kwebs-lafise/) con el slug `y2kwebs-lafise`, bajo la cuenta `y2kwebs`. Este árbol corresponde a **0.2.3**. Su publicación usa el ZIP del CI aprobado y actualiza únicamente `trunk` y el nuevo tag, conservando las versiones anteriores y los assets. La revisión SVN, hashes y comprobaciones públicas finales se registran en las notas de la [release v0.2.3](https://github.com/Y2KWebs/y2kwebs-lafise/releases/tag/v0.2.3), sin modificar el paquete ya publicado. Los registros históricos siguientes corresponden a publicaciones previamente verificadas.
+El plugin se distribuye en [WordPress.org](https://wordpress.org/plugins/y2kwebs-lafise/) con el slug `y2kwebs-lafise`, bajo la cuenta `y2kwebs`. Este árbol corresponde a **0.2.4**. Su publicación usa el ZIP del CI aprobado y actualiza únicamente `trunk` y el nuevo tag, conservando las versiones anteriores y los assets. La revisión SVN, hashes y comprobaciones públicas finales se registran en las notas de la [release v0.2.4](https://github.com/Y2KWebs/y2kwebs-lafise/releases/tag/v0.2.4), sin modificar el paquete ya publicado. Los registros históricos siguientes corresponden a publicaciones previamente verificadas.
 
 Los comercios pueden instalarlo desde el directorio de WordPress o descargar el ZIP de su ficha. Los requisitos, el servicio bancario externo y las limitaciones están en [readme.txt](../readme.txt); las pruebas reales y simuladas se distinguen en [validación](validation.md).
 

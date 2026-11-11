@@ -9,7 +9,7 @@ $assert = static function (bool $ok, string $message) use (&$checks): void {
 };
 $root = dirname(Y2K_LAFISE_FILE);
 $assert(!is_dir($root . '/tests') && !is_dir($root . '/scripts'), 'ZIP mount must exclude development files');
-$assert(Y2K_LAFISE_VERSION === '0.2.3', 'Installed ZIP version');
+$assert(Y2K_LAFISE_VERSION === '0.2.4', 'Installed ZIP version');
 $assert(is_readable($root . '/languages/y2kwebs-lafise.pot') && is_readable($root . '/languages/y2kwebs-lafise-es_ES.po')
     && is_readable($root . '/languages/y2kwebs-lafise-es_ES.mo'), 'ZIP includes the source and compiled Spanish catalogues');
 switch_to_locale('es_MX');

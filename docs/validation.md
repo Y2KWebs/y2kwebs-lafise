@@ -1,6 +1,14 @@
 # Validación del plugin
 
-Registro actualizado el **6 de noviembre de 2026**. 0.2.3 mejora la compatibilidad de campos 3DS y la conservación de diagnósticos. Todas las nuevas comprobaciones usan datos ficticios y banco simulado. Los pagos reales documentados abajo corresponden a versiones anteriores y no se atribuyen a esta actualización.
+Registro actualizado el **11 de noviembre de 2026**. 0.2.4 añade recuperación de fallos de autenticación y vencimiento diferenciado de etapas 3DS. Todas las nuevas comprobaciones usan datos ficticios y banco simulado. Los pagos reales documentados abajo corresponden a versiones anteriores y no se atribuyen a esta actualización.
+
+## Regresión de autenticación 3DS 0.2.4
+
+Se valida `3DS-RES-003` únicamente tras una continuación enviada, autenticada y vinculada al intento, etapa, UUID y recibo previo. Los recorridos cubiertos son fingerprint, desafío directo y fingerprint seguido de desafío. Contextos ausentes o manipulados, datos financieros incompatibles, autorizaciones, firmas inesperadas y códigos contradictorios mantienen el resultado incierto; no permiten otro cobro. Los cuerpos y mensajes bancarios no se conservan.
+
+Los nuevos fingerprints vencen tras 60 segundos y los desafíos tras 600. Las regresiones comprueban vencimiento desde apertura de confirmación, consulta, callback, inicio de otro intento y conciliación; callbacks tardíos sin Process3DS, programación del plazo corto, desafío todavía válido tras 61 segundos y conservación de vencimientos anteriores. La evidencia financiera, un envío incierto o un pedido ya pagado bloquean el reintento. Una continuación de un pedido ya pagado no se envía al banco.
+
+Comprobaciones ejecutadas: sintaxis de 26 archivos PHP; 165 aserciones de protocolo y 62 de transporte en PHP 8.4 local; 159 aserciones de integración con almacenamiento clásico y otras 159 con HPOS en WordPress 6.9.4, WooCommerce 10.3.0 y PHP 8.2.35. También pasaron 17 aserciones de ajustes, 34 de seguridad HTTP, 64 de idiomas, 3 pruebas JavaScript y 9 pruebas Python. El catálogo conserva 70 cadenas con español completo y POT/MO reproducibles. El ZIP incluye 40 archivos seleccionados y pasó instalación, activación y 12 aserciones de versión, ajustes y API. Plugin Check 2.1.0 sobre el ZIP no reportó errores ni avisos, sin excluir categorías ni códigos. No se han realizado cobros reales con 0.2.4 ni cambios en la demostración. La publicación utilizará el artefacto aprobado del commit integrado y registrará hashes y revisión SVN en sus notas de release.
 
 ## Regresión de compatibilidad 3DS 0.2.3
 

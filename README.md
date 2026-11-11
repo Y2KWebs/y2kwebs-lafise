@@ -4,11 +4,11 @@ Plugin independiente, gratuito y de código abierto para integrar los pagos REST
 
 [WordPress.org: última versión publicada](https://wordpress.org/plugins/y2kwebs-lafise/) · [Releases en GitHub](https://github.com/Y2KWebs/y2kwebs-lafise/releases) · [Instalación y soporte profesional](https://y2kwebs.com/) · [Reportar un problema](https://github.com/Y2KWebs/y2kwebs-lafise/issues/new/choose)
 
-**Versión 0.2.3 — mejoras de compatibilidad 3DS.** Acepta variantes de mayúsculas de los campos de continuación 3DS y conserva diagnósticos seguros ante consultas inconclusas. Rechaza campos ambiguos y mantiene las comprobaciones financieras.
+**Versión 0.2.4 — recuperación de autenticación 3DS.** Reconoce fallos de autenticación vinculados al intento validado y cierra fingerprints sin respuesta tras 60 segundos. El desafío manual conserva 10 minutos; los resultados financieros inciertos siguen bloqueados para revisión.
 
 **Interfaz bilingüe.** Incluye español para cualquier variante española de WordPress e inglés como idioma fuente. Las traducciones regionales disponibles tienen prioridad. El administrador usa su idioma de usuario y la compra el de la tienda; los títulos personalizados se conservan. La validación comunitaria de las traducciones del directorio se gestiona por separado y no condiciona el español incluido.
 
-Pasarela funcional con pagos reales comprobados en WooCommerce. Con 0.2.1 se verificó un pago de USD 1 con desafío 3DS manual completado por el titular, pedido pagado e intento aprobado. Las regresiones de 0.2.3 utilizan un banco simulado; quedan escenarios específicos por ampliar, según los [resultados y limitaciones](docs/validation.md). Es un desarrollo independiente, no un plugin oficial de LAFISE; no se afirma una alianza ni respaldo del banco.
+Pasarela funcional con pagos reales comprobados en WooCommerce. Con 0.2.1 se verificó un pago de USD 1 con desafío 3DS manual completado por el titular, pedido pagado e intento aprobado. Las regresiones de 0.2.4 utilizan un banco simulado; quedan escenarios específicos por ampliar, según los [resultados y limitaciones](docs/validation.md). Es un desarrollo independiente, no un plugin oficial de LAFISE; no se afirma una alianza ni respaldo del banco.
 
 ## Funcionalidades
 

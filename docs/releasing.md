@@ -1,6 +1,6 @@
 # Versiones y canales de distribución
 
-Este árbol corresponde a **0.2.3**, con compatibilidad de nombres 3DS y conservación de diagnósticos. La publicación se realiza tras integrar su PR con CI satisfactorio. El ZIP, checksum y registro final de publicación de esta versión se recogen en la [release v0.2.3](https://github.com/Y2KWebs/y2kwebs-lafise/releases/tag/v0.2.3); la versión del directorio puede comprobarse en [WordPress.org](https://wordpress.org/plugins/y2kwebs-lafise/). No se sustituyen artefactos publicados para añadir registros posteriores.
+Este árbol corresponde a **0.2.4**, con recuperación segura de fallos de autenticación y vencimiento diferenciado de etapas 3DS. La publicación se realiza tras integrar su PR con CI satisfactorio. El ZIP, checksum y registro final de publicación de esta versión se recogen en la [release v0.2.4](https://github.com/Y2KWebs/y2kwebs-lafise/releases/tag/v0.2.4); la versión del directorio puede comprobarse en [WordPress.org](https://wordpress.org/plugins/y2kwebs-lafise/). No se sustituyen artefactos publicados para añadir registros posteriores.
 
 La versión **0.2.2** se publicó el 2 de noviembre de 2026 tras integrar el PR #3 con CI satisfactorio; revisión SVN `3780516`. Su [release preliminar](https://github.com/Y2KWebs/y2kwebs-lafise/releases/tag/v0.2.2) y los artefactos anteriores se conservan intactos. WordPress.org aprobó la inclusión y recibió la primera publicación el 2 de noviembre, revisión SVN `3780395`; los iconos y las cabeceras se añadieron en `3780418`.
 
